@@ -424,12 +424,12 @@ export const NewspaperLibrary: React.FC = () => {
               <option value="Hindi">Hindi</option>
             </select>
 
-            <div>
+            <div className="relative z-50">
               <button
                 onClick={() => setCalendarOpen(!calendarOpen)}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
                   calendarOpen
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                     : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
                 }`}
               >
@@ -437,21 +437,23 @@ export const NewspaperLibrary: React.FC = () => {
                 <span>Calendar</span>
               </button>
 
-              {/* Centered Modal Overlay — Immune to Stacking Context Bleed */}
+              {/* Dropdown directly below Calendar button */}
               {calendarOpen && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-                  {/* Backdrop click handler */}
+                <>
+                  {/* Backdrop to handle click outside */}
                   <div
-                    className="fixed inset-0 -z-10"
+                    className="fixed inset-0 z-40"
                     onClick={() => setCalendarOpen(false)}
                   />
-                  <CalendarPicker
-                    selectedDate={selectedDate}
-                    onSelect={setSelectedDate}
-                    availableDates={availableDates}
-                    onClose={() => setCalendarOpen(false)}
-                  />
-                </div>
+                  <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <CalendarPicker
+                      selectedDate={selectedDate}
+                      onSelect={setSelectedDate}
+                      availableDates={availableDates}
+                      onClose={() => setCalendarOpen(false)}
+                    />
+                  </div>
+                </>
               )}
             </div>
 
@@ -469,7 +471,7 @@ export const NewspaperLibrary: React.FC = () => {
       </div>
 
       {/* ─── Newspaper Cards Grid ─────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {filteredPapers.map((paper) => (
           <div
             key={paper.id}
