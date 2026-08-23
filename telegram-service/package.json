@@ -1,0 +1,16 @@
+{
+  "name": "upsc-telegram-service",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Telegram MTProto client to fetch newspaper PDFs from public UPSC channels",
+  "scripts": {
+    "auth": "node auth.mjs",
+    "fetch": "node fetch-newspapers.mjs",
+    "start": "node scheduler.mjs"
+  },
+  "dependencies": {
+    "telegram": "^2.26.16",
+    "input": "^1.0.1",
+    "dotenv": "^16.4.5"
+  }
+}
