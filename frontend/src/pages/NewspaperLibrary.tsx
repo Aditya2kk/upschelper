@@ -73,7 +73,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   return (
-    <div className="glass-panel rounded-2xl border border-indigo-500/30 p-5 w-[340px] shadow-2xl shadow-indigo-500/10">
+    <div className="bg-slate-900/98 border border-indigo-500/40 rounded-2xl p-5 w-[340px] shadow-2xl shadow-black/90 backdrop-blur-2xl ring-1 ring-white/10 relative z-50">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
@@ -357,7 +357,7 @@ export const NewspaperLibrary: React.FC = () => {
       </div>
 
       {/* ─── Date Navigator Bar ───────────────────────────── */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-800">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-30">
         <div className="flex items-center justify-between gap-4">
           {/* Left: prev/next day arrows + current date */}
           <div className="flex items-center gap-2">
