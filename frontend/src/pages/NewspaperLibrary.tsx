@@ -73,31 +73,51 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   return (
-    <div className="bg-slate-900/98 border border-indigo-500/40 rounded-2xl p-5 w-[340px] shadow-2xl shadow-black/90 backdrop-blur-2xl ring-1 ring-white/10 relative z-50">
+    <div
+      style={{ backgroundColor: '#0f172a' }}
+      className="border border-indigo-500/40 rounded-3xl p-6 w-[360px] max-w-full shadow-2xl shadow-black ring-1 ring-white/10 relative z-[100]"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <h3 className="text-sm font-bold text-white">
-          {MONTH_NAMES[viewMonth]} {viewYear}
-        </h3>
-        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
-          <ChevronRight className="w-4 h-4" />
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <h3 className="text-base font-bold text-white tracking-wide">
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </h3>
+          <button
+            onClick={nextMonth}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+          title="Close Calendar"
+        >
+          <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Day labels */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_LABELS.map((d) => (
-          <div key={d} className="text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider py-1">
+          <div key={d} className="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wider py-1">
             {d}
           </div>
         ))}
       </div>
 
       {/* Day grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {/* Empty cells for days before the 1st */}
         {Array.from({ length: firstDayOfWeek }).map((_, i) => (
           <div key={`empty-${i}`} className="w-full aspect-square" />
@@ -117,23 +137,23 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
               disabled={isFuture}
               onClick={() => { onSelect(dateStr); onClose(); }}
               className={`
-                w-full aspect-square rounded-lg text-xs font-semibold transition-all relative flex items-center justify-center
+                w-full aspect-square rounded-xl text-xs font-semibold transition-all relative flex items-center justify-center
                 ${isSelected
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 ring-2 ring-indigo-400/50'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50 ring-2 ring-indigo-400'
                   : isToday
-                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 font-bold'
                     : hasNewspapers
-                      ? 'bg-slate-800/60 text-white hover:bg-indigo-500/30 hover:text-indigo-200 cursor-pointer'
+                      ? 'bg-slate-800 text-white hover:bg-indigo-600/40 hover:text-indigo-200 cursor-pointer'
                       : isFuture
                         ? 'text-slate-700 cursor-not-allowed'
-                        : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 cursor-pointer'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 cursor-pointer'
                 }
               `}
             >
               {day}
               {/* Dot indicator for dates with newspapers */}
               {hasNewspapers && !isSelected && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-400" />
+                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400" />
               )}
             </button>
           );
@@ -141,18 +161,18 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
       </div>
 
       {/* Legend */}
-      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3 text-[10px] text-slate-500">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Available
+      <div className="mt-5 pt-4 border-t border-slate-800 flex items-center justify-between">
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" /> Available
           </span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded bg-indigo-600" /> Selected
           </span>
         </div>
         <button
           onClick={() => { onSelect(todayStr); onClose(); }}
-          className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="px-3 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-xs font-bold text-indigo-300 transition-colors"
         >
           Today
         </button>
@@ -404,12 +424,12 @@ export const NewspaperLibrary: React.FC = () => {
               <option value="Hindi">Hindi</option>
             </select>
 
-            <div className="relative">
+            <div>
               <button
                 onClick={() => setCalendarOpen(!calendarOpen)}
                 className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
                   calendarOpen
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-400'
                     : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
                 }`}
               >
@@ -417,21 +437,21 @@ export const NewspaperLibrary: React.FC = () => {
                 <span>Calendar</span>
               </button>
 
-              {/* Calendar Dropdown */}
+              {/* Centered Modal Overlay — Immune to Stacking Context Bleed */}
               {calendarOpen && (
-                <>
-                  {/* Backdrop */}
-                  <div className="fixed inset-0 z-40" onClick={() => setCalendarOpen(false)} />
-                  {/* Calendar */}
-                  <div className="absolute right-0 top-12 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <CalendarPicker
-                      selectedDate={selectedDate}
-                      onSelect={setSelectedDate}
-                      availableDates={availableDates}
-                      onClose={() => setCalendarOpen(false)}
-                    />
-                  </div>
-                </>
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+                  {/* Backdrop click handler */}
+                  <div
+                    className="fixed inset-0 -z-10"
+                    onClick={() => setCalendarOpen(false)}
+                  />
+                  <CalendarPicker
+                    selectedDate={selectedDate}
+                    onSelect={setSelectedDate}
+                    availableDates={availableDates}
+                    onClose={() => setCalendarOpen(false)}
+                  />
+                </div>
               )}
             </div>
 
