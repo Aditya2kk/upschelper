@@ -631,25 +631,31 @@ export const NewspaperLibrary: React.FC = () => {
             </div>
 
             {/* Modal Body: Mobile banner + embedded PDF viewer */}
-            <div className="flex-1 bg-slate-950 relative flex flex-col">
-              <div className="sm:hidden p-3 bg-blue-950/40 border-b border-blue-500/20 flex items-center justify-between gap-2 text-xs">
-                <span className="text-blue-300 text-[11px]">Best viewed in full screen</span>
+            <div className="flex-1 bg-slate-950 relative flex flex-col overflow-hidden">
+              <div className="sm:hidden p-2.5 bg-blue-950/40 border-b border-blue-500/20 flex items-center justify-between gap-2 text-xs">
+                <span className="text-blue-300 text-[11px]">For best reading experience:</span>
                 <a
                   href={readingPaper.pdfUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-2.5 py-1 rounded bg-blue-600 text-white text-[11px] font-bold flex items-center gap-1 shrink-0"
+                  className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold flex items-center gap-1 shrink-0 shadow-sm"
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span>Full Screen</span>
                 </a>
               </div>
 
-              <iframe
-                src={`${readingPaper.pdfUrl}#toolbar=1&navpanes=1`}
-                title={readingPaper.title}
-                className="w-full flex-1 border-none"
-              />
+              <object
+                data={`${readingPaper.pdfUrl}#view=FitH&toolbar=1&navpanes=0`}
+                type="application/pdf"
+                className="w-full flex-1 border-none bg-slate-900"
+              >
+                <iframe
+                  src={`${readingPaper.pdfUrl}#view=FitH&toolbar=1&navpanes=0`}
+                  title={readingPaper.title}
+                  className="w-full h-full border-none bg-slate-900"
+                />
+              </object>
             </div>
           </div>
         </div>
