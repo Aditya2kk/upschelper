@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Bot, Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Bot, Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck, Eye, EyeOff, KeyRound, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -12,6 +12,8 @@ export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [adminSecret, setAdminSecret] = useState('');
+  const [showAdminField, setShowAdminField] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,16 +45,25 @@ export const Register: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await api.post('/auth/register', {
+      const payload: any = {
         name: trimmedName,
         email: trimmedEmail,
         password
-      });
+      };
+      if (adminSecret.trim()) {
+        payload.adminSecret = adminSecret.trim();
+      }
+
+      const res = await api.post('/auth/register', payload);
 
       if (res.data.success) {
         const { accessToken, refreshToken, user } = res.data.data;
         setAuth(user, accessToken, refreshToken);
-        navigate('/dashboard');
+        if (user.role === 'ADMIN') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please check your inputs.');
@@ -169,6 +180,37 @@ export const Register: React.FC = () => {
               </div>
             </div>
 
+            {/* Optional Admin Passphrase for Admin Account Creation */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setShowAdminField(!showAdminField)}
+                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1.5 transition-colors"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Registering as Administrator?</span>
+                {showAdminField ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              {showAdminField && (
+                <div className="mt-2.5 p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 animate-in fade-in slide-in-from-top-1 duration-150">
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-indigo-300 mb-1">
+                    Admin Secret Key
+                  </label>
+                  <input
+                    type="password"
+                    value={adminSecret}
+                    onChange={(e) => setAdminSecret(e.target.value)}
+                    placeholder="Enter your private admin passphrase"
+                    className="w-full px-3 py-2 rounded-lg text-xs bg-slate-950/80 border border-indigo-500/30 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Leave blank if you are registering as a regular UPSC aspirant.
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -178,17 +220,17 @@ export const Register: React.FC = () => {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Create Aspirant Account</span>
+                  <span>Create Account</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center pt-4 border-t border-slate-800/80">
+          <div className="mt-6 text-center">
             <p className="text-xs text-slate-400">
               Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-indigo-400 hover:text-indigo-300 underline">
+              <Link to="/login" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
                 Sign in
               </Link>
             </p>

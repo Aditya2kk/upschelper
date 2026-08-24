@@ -35,6 +35,9 @@ public class AuthService {
     @Value("${app.jwt.refresh-expiration-ms:604800000}")
     private long refreshExpirationMs;
 
+    @Value("${app.security.admin-secret:UPSC_ADMIN_2026}")
+    private String adminSecret;
+
     // Brute-force protection: track failed attempts per email
     private final Map<String, Integer> failedAttempts = new ConcurrentHashMap<>();
     private final Map<String, Instant> lockoutExpiry = new ConcurrentHashMap<>();
@@ -61,11 +64,21 @@ public class AuthService {
             throw new BadRequestException("An account with this email address already exists.");
         }
 
+        String userRole = "USER";
+        if (request.getAdminSecret() != null && !request.getAdminSecret().trim().isEmpty()) {
+            if (request.getAdminSecret().trim().equals(adminSecret)) {
+                userRole = "ADMIN";
+                log.info("Registering user '{}' with verified ADMIN role.", normalizedEmail);
+            } else {
+                throw new BadRequestException("Invalid Admin Secret Key. Please check your admin passphrase.");
+            }
+        }
+
         User user = User.builder()
                 .name(request.getName().trim())
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .role("USER")
+                .role(userRole)
                 .build();
 
         user = userRepository.save(user);
