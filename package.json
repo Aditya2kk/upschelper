@@ -1,13 +1,8 @@
 {
-  "name": "upsc-newshub-ai",
+  "name": "upsc-newshub",
   "version": "1.0.0",
-  "description": "UPSC NewsHub AI Platform",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "create-admin": "node scripts/create-admin.mjs"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "pg": "^8.13.1"
+    "build": "cd frontend && npm install && npm run build"
   }
 }
