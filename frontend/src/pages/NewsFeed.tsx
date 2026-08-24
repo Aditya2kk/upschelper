@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Flame, Sparkles, Bookmark, Filter, Search,
   Globe, Shield, Cpu, TrendingUp, Leaf, Building2,
   Landmark, Users, Wheat, Heart, Clock, ChevronDown, BookOpen,
-  Calendar, ChevronLeft, ChevronRight, X, RotateCcw
+  Calendar, ChevronLeft, ChevronRight, X, RotateCcw, Copy, Check,
+  ArrowRight, FileText, Share2, HelpCircle
 } from 'lucide-react';
 import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates } from '../services/newsData';
 
@@ -213,10 +214,11 @@ const categoryFilters = [
 
 export const NewsFeed: React.FC = () => {
   const navigate = useNavigate();
+  const { id: urlArticleId } = useParams<{ id?: string }>();
+
   const availableDatesList = useMemo(() => getAvailableNewsDates(), []);
   const availableDatesSet = useMemo(() => new Set(availableDatesList), [availableDatesList]);
   
-  // Default to today if available, else latest available news date
   const defaultDate = availableDatesList.length > 0 ? availableDatesList[0] : '2026-08-24';
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -230,8 +232,38 @@ export const NewsFeed: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [showOnlyHigh, setShowOnlyHigh] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Navigate to previous/next day
+  // Active reading article modal state
+  const [readingArticle, setReadingArticle] = useState<NewsItem | null>(null);
+
+  // If URL has /news/:id, load that article directly
+  useEffect(() => {
+    if (urlArticleId) {
+      const match = ALL_NEWS_ITEMS.find((item) => item.id === urlArticleId);
+      if (match) {
+        setReadingArticle(match);
+      }
+    }
+  }, [urlArticleId]);
+
+  const handleOpenArticle = (item: NewsItem) => {
+    setReadingArticle(item);
+    window.history.replaceState(null, '', `/news/${item.id}`);
+  };
+
+  const handleCloseArticle = () => {
+    setReadingArticle(null);
+    window.history.replaceState(null, '', '/news');
+  };
+
+  const handleCopySummary = (item: NewsItem) => {
+    const textToCopy = `${item.title}\nSource: ${item.source} (${item.date})\nGS Paper: ${item.gsPaper}\n\nSummary:\n${item.summary}\n\nKey Pointers:\n${item.prelimsPoints?.map(p => `• ${p}`).join('\n') || ''}`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const goDay = (offset: number) => {
     if (selectedDate === 'ALL') {
       setSelectedDate(todayStr);
@@ -246,15 +278,10 @@ export const NewsFeed: React.FC = () => {
   };
 
   const filtered = ALL_NEWS_ITEMS.filter((item) => {
-    // Date filter
     if (selectedDate !== 'ALL' && item.dateIso !== selectedDate) return false;
-    // GS Paper filter
     if (selectedGS !== 'ALL' && item.gsPaper !== selectedGS) return false;
-    // Category filter
     if (selectedCategory !== 'ALL' && item.category !== selectedCategory) return false;
-    // High importance filter
     if (showOnlyHigh && item.importance !== 'HIGH') return false;
-    // Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -328,7 +355,6 @@ export const NewsFeed: React.FC = () => {
 
           {/* Right: Date filter actions + Calendar Picker */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* All Dates toggle */}
             <button
               onClick={() => setSelectedDate(selectedDate === 'ALL' ? todayStr : 'ALL')}
               className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
@@ -341,7 +367,6 @@ export const NewsFeed: React.FC = () => {
               <span>{selectedDate === 'ALL' ? 'Viewing All Dates' : 'All Dates'}</span>
             </button>
 
-            {/* Calendar button with dropdown */}
             <div className="relative z-50">
               <button
                 onClick={() => setCalendarOpen(!calendarOpen)}
@@ -355,7 +380,6 @@ export const NewsFeed: React.FC = () => {
                 <span>Calendar</span>
               </button>
 
-              {/* Dropdown positioned directly below Calendar button */}
               {calendarOpen && (
                 <>
                   <div
@@ -374,7 +398,6 @@ export const NewsFeed: React.FC = () => {
               )}
             </div>
 
-            {/* Today shortcut */}
             {selectedDate !== todayStr && (
               <button
                 onClick={() => setSelectedDate(todayStr)}
@@ -389,7 +412,6 @@ export const NewsFeed: React.FC = () => {
 
       {/* Search & Filter Bar */}
       <div className="glass-panel p-4 rounded-2xl border border-slate-800 space-y-4">
-        {/* Search Input */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
           <input
@@ -401,7 +423,6 @@ export const NewsFeed: React.FC = () => {
           />
         </div>
 
-        {/* Filter Chips */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-500" />
@@ -436,7 +457,6 @@ export const NewsFeed: React.FC = () => {
           </div>
         </div>
 
-        {/* Category Filters */}
         <div className="flex flex-wrap gap-1.5">
           {categoryFilters.map((cat) => (
             <button
@@ -469,7 +489,8 @@ export const NewsFeed: React.FC = () => {
         {visible.map((item) => (
           <div
             key={item.id}
-            className="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/30 transition-all space-y-3 group"
+            className="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all space-y-3 group cursor-pointer"
+            onClick={() => handleOpenArticle(item)}
           >
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
@@ -490,17 +511,15 @@ export const NewsFeed: React.FC = () => {
             </div>
 
             <h3
-              className="font-bold text-slate-100 text-base leading-snug hover:text-indigo-400 cursor-pointer transition-colors"
-              onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
+              className="font-bold text-slate-100 text-base leading-snug group-hover:text-indigo-400 transition-colors"
             >
               {item.title}
             </h3>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
               {item.summary}
             </p>
 
-            {/* Topic Tags */}
             <div className="flex flex-wrap gap-1.5">
               {item.topics.map((topic) => (
                 <span
@@ -512,19 +531,43 @@ export const NewsFeed: React.FC = () => {
               ))}
             </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-slate-800/60">
+            <div className="pt-2 flex items-center justify-between border-t border-slate-800/60" onClick={(e) => e.stopPropagation()}>
               <button
-                onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                onClick={() => handleOpenArticle(item)}
+                className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>UPSC AI Analysis & Model Answer</span>
+                <FileText className="w-3.5 h-3.5" />
+                <span>Read Full Article & Analysis</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
 
-              <button className="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 transition-colors">
-                <Bookmark className="w-3.5 h-3.5" />
-                <span>Save</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCopySummary(item)}
+                  className="text-slate-400 hover:text-indigo-300 text-xs flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-800 transition-colors"
+                  title="Copy summary"
+                >
+                  {copiedId === item.id ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400 font-semibold">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
+                  className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Prep</span>
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -555,6 +598,177 @@ export const NewsFeed: React.FC = () => {
           >
             View All Current Affairs
           </button>
+        </div>
+      )}
+
+      {/* ─── FULL ARTICLE READER MODAL ───────────────────────── */}
+      {readingArticle && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          {/* Backdrop Click Dismiss */}
+          <div className="fixed inset-0 -z-10" onClick={handleCloseArticle} />
+
+          {/* Reader Panel */}
+          <div
+            style={{ backgroundColor: '#0b0f19' }}
+            className="w-full max-w-3xl max-h-[90vh] rounded-3xl border border-indigo-500/40 shadow-2xl shadow-black ring-1 ring-white/10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header Bar */}
+            <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/90 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                  {readingArticle.gsPaper}
+                </span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border flex items-center gap-1 ${categoryColors[readingArticle.category] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                  {categoryIcons[readingArticle.category]}
+                  {readingArticle.category.replace('_', ' ')}
+                </span>
+                <span className="text-xs text-slate-400 font-medium">
+                  {readingArticle.source} • {readingArticle.date}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCopySummary(readingArticle)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                  title="Copy summary & notes"
+                >
+                  {copiedId === readingArticle.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={handleCloseArticle}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                  title="Close Reader"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-slate-200">
+              {/* Article Headline */}
+              <div>
+                <h1 className="text-xl md:text-2xl font-black text-white leading-tight">
+                  {readingArticle.title}
+                </h1>
+                {readingArticle.syllabusTheme && (
+                  <div className="mt-3 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/20 text-xs text-indigo-200 flex items-start gap-2">
+                    <BookOpen className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-indigo-300">Syllabus Mapping:</span>{' '}
+                      {readingArticle.syllabusTheme}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Full Article Text Narrative */}
+              <div className="space-y-4 text-sm leading-relaxed text-slate-300 font-normal">
+                {readingArticle.fullArticle.split('\n\n').map((paragraph, idx) => (
+                  <p key={idx} className="text-slate-300 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+
+              {/* Prelims Focus Pointers Box */}
+              {readingArticle.prelimsPoints && readingArticle.prelimsPoints.length > 0 && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Prelims High-Yield Facts & Pointers</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    {readingArticle.prelimsPoints.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Mains Focus Dimensions Box */}
+              {readingArticle.mainsPoints && readingArticle.mainsPoints.length > 0 && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900 border border-indigo-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-indigo-400 text-xs font-extrabold uppercase tracking-wider">
+                    <Building2 className="w-4 h-4" />
+                    <span>Mains Analytical Dimensions & Arguments</span>
+                  </div>
+                  <ul className="space-y-2.5 text-xs text-slate-300">
+                    {readingArticle.mainsPoints.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 mt-1.5" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Practice Mains Question Box */}
+              {readingArticle.mainsQuestion && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-amber-950/30 to-slate-900 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-400 text-xs font-extrabold uppercase tracking-wider">
+                    <HelpCircle className="w-4 h-4" />
+                    <span>UPSC CSE Mains Practice Question</span>
+                  </div>
+                  <p className="text-xs text-amber-100/90 font-medium italic leading-relaxed">
+                    "{readingArticle.mainsQuestion}"
+                  </p>
+                </div>
+              )}
+
+              {/* Topic Tags */}
+              <div className="flex flex-wrap gap-1.5 pt-2">
+                {readingArticle.topics.map((topic) => (
+                  <span
+                    key={topic}
+                    className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700"
+                  >
+                    #{topic}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Bottom Action Footer */}
+            <div className="p-4 md:px-8 border-t border-slate-800/80 bg-slate-900/90 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              <button
+                onClick={() => {
+                  handleCloseArticle();
+                  navigate(`/ai/research?q=${encodeURIComponent('Provide comprehensive UPSC CSE Mains analysis, background, constitutional provisions, arguments, and forward outlook for: ' + readingArticle.title)}`);
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Generate UPSC Model Answer with AI</span>
+              </button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button
+                  onClick={() => {
+                    handleCloseArticle();
+                    navigate(`/ai/research?q=${encodeURIComponent('Generate 5 Prelims MCQs with detailed explanations for UPSC CSE based on: ' + readingArticle.title)}`);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>5 Prelims MCQs</span>
+                </button>
+
+                <button
+                  onClick={handleCloseArticle}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
