@@ -393,23 +393,23 @@ export const NewspaperLibrary: React.FC = () => {
       </div>
 
       {/* ─── Date Navigator Bar ───────────────────────────── */}
-      <div className="glass-panel p-3.5 sm:p-4 rounded-2xl border border-slate-800 relative z-30">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Left / Top Row: prev/next day arrows + current date */}
-          <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-30">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Left: prev/next day arrows + current date */}
+          <div className="flex items-center gap-2">
             <button
               onClick={() => goDay(-1)}
-              className="p-2.5 sm:p-2 rounded-xl bg-slate-900 sm:bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
               title="Previous day"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div className="text-center flex-1 sm:flex-initial sm:min-w-[200px]">
-              <h2 className="text-sm sm:text-base font-bold text-white">
+            <div className="text-center min-w-[200px]">
+              <h2 className="text-base font-bold text-white">
                 {formatDateHeading(selectedDate)}
               </h2>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 {filteredPapers.length} newspaper{filteredPapers.length !== 1 ? 's' : ''} available
               </p>
             </div>
@@ -417,10 +417,10 @@ export const NewspaperLibrary: React.FC = () => {
             <button
               onClick={() => goDay(1)}
               disabled={selectedDate >= todayStr}
-              className={`p-2.5 sm:p-2 rounded-xl transition-colors ${
+              className={`p-2 rounded-xl transition-colors ${
                 selectedDate >= todayStr
                   ? 'text-slate-700 cursor-not-allowed'
-                  : 'bg-slate-900 sm:bg-transparent hover:bg-slate-800 text-slate-400 hover:text-white'
+                  : 'hover:bg-slate-800 text-slate-400 hover:text-white'
               }`}
               title="Next day"
             >
@@ -428,59 +428,66 @@ export const NewspaperLibrary: React.FC = () => {
             </button>
           </div>
 
-          {/* Right / Bottom Row: Language filter + Calendar toggle + Today */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+          {/* Right: Calendar toggle + language filter */}
+          <div className="flex items-center gap-3">
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
-              className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
             >
               <option value="ALL">All Languages</option>
               <option value="English">English</option>
               <option value="Hindi">Hindi</option>
             </select>
 
-            <button
-              onClick={() => setCalendarOpen(true)}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 transition-all active:scale-95"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Calendar</span>
-            </button>
+            {/* Calendar button with dropdown directly below */}
+            <div className="relative">
+              <button
+                onClick={() => setCalendarOpen(!calendarOpen)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  calendarOpen
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Calendar</span>
+              </button>
 
+              {/* Dropdown directly below Calendar button */}
+              {calendarOpen && (
+                <>
+                  {/* Backdrop to handle click outside */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setCalendarOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <CalendarPicker
+                      selectedDate={selectedDate}
+                      onSelect={(d) => {
+                        setSelectedDate(d);
+                        setCalendarOpen(false);
+                      }}
+                      availableDates={availableDates}
+                      onClose={() => setCalendarOpen(false)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Today shortcut */}
             {selectedDate !== todayStr && (
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className="px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors shrink-0"
+                className="px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors"
               >
                 Today
               </button>
             )}
           </div>
         </div>
-
-        {/* ─── Centered Calendar Modal Overlay ──────────────── */}
-        {calendarOpen && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150"
-            onClick={() => setCalendarOpen(false)}
-          >
-            <div
-              className="relative z-50 max-w-sm w-full animate-in zoom-in-95 duration-150"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CalendarPicker
-                selectedDate={selectedDate}
-                onSelect={(d) => {
-                  setSelectedDate(d);
-                  setCalendarOpen(false);
-                }}
-                availableDates={availableDates}
-                onClose={() => setCalendarOpen(false)}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ─── Newspaper Cards Grid ─────────────────────────── */}
