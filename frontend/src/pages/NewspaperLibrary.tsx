@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Newspaper, Calendar, Download, Eye, Sparkles, Filter,
   FileText, Send, Clock, RefreshCw, Settings,
-  ChevronLeft, ChevronRight, X
+  ChevronLeft, ChevronRight, X, ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
