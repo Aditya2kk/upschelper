@@ -221,6 +221,19 @@ export const NewspaperLibrary: React.FC = () => {
         const data: Manifest = await res.json();
         setManifest(data);
         setError(null);
+
+        // Smart auto-date selection:
+        // If today has newspapers, stay on today.
+        // Otherwise, automatically select the most recent available newspaper date.
+        if (data.newspapers && data.newspapers.length > 0) {
+          const hasToday = data.newspapers.some((n) => n.editionDate === todayStr);
+          if (!hasToday) {
+            const sortedDates = Array.from(new Set(data.newspapers.map((n) => n.editionDate))).sort().reverse();
+            if (sortedDates.length > 0) {
+              setSelectedDate(sortedDates[0]);
+            }
+          }
+        }
       } else {
         setError('not-configured');
       }
