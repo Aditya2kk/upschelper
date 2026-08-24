@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Flame, Sparkles, Bookmark, ArrowRight, Filter, Search,
-  Globe, Shield, Cpu, TrendingUp, Leaf, Scale, Building2,
-  Landmark, Users, Wheat, Heart, Clock, ChevronDown, BookOpen
+  Flame, Sparkles, Bookmark, Filter, Search,
+  Globe, Shield, Cpu, TrendingUp, Leaf, Building2,
+  Landmark, Users, Wheat, Heart, Clock, ChevronDown, BookOpen,
+  Calendar, ChevronLeft, ChevronRight, X, RotateCcw
 } from 'lucide-react';
+import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates } from '../services/newsData';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   'POLITY': <Landmark className="w-3.5 h-3.5" />,
@@ -38,240 +40,169 @@ const categoryColors: Record<string, string> = {
   'CURRENT_AFFAIRS': 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
 };
 
-interface NewsItem {
-  id: string;
-  title: string;
-  source: string;
-  date: string;
-  category: string;
-  importance: 'HIGH' | 'NORMAL';
-  gsPaper: string;
-  summary: string;
-  topics: string[];
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+interface CalendarPickerProps {
+  selectedDate: string; // YYYY-MM-DD
+  onSelect: (date: string) => void;
+  availableDates: Set<string>;
+  onClose: () => void;
 }
 
-const allNews: NewsItem[] = [
-  {
-    id: '1',
-    title: 'India-China Bilateral Dialogue on Border Disengagement Advances in Eastern Ladakh',
-    source: 'The Hindu',
-    date: '23 Aug 2026',
-    category: 'GEOPOLITICS',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'Special Representatives met to review diplomatic and military channels for complete disengagement along LAC. India insists on restoration of status quo ante at Depsang and Demchok.',
-    topics: ['LAC', 'India-China Relations', 'National Security'],
-  },
-  {
-    id: '2',
-    title: 'India Semiconductor Mission Approves Phase-II Fabrication Plants in Gujarat & Tamil Nadu',
-    source: 'Indian Express',
-    date: '23 Aug 2026',
-    category: 'SCIENCE_TECH',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'Union Cabinet approves ₹45,000 Cr outlay for sub-10nm chip manufacturing and R&D ecosystem. Three fabs to be operational by 2029.',
-    topics: ['ISM', 'Make in India', 'Electronics Manufacturing'],
-  },
-  {
-    id: '3',
-    title: 'Supreme Court Standardizes Guidelines on Preventive Detention under Article 22',
-    source: 'Press Information Bureau',
-    date: '23 Aug 2026',
-    category: 'POLITY',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'Constitution Bench mandates strict adherence to procedural safeguards and 90-day review limits. Personal liberty cannot be curtailed without compelling grounds.',
-    topics: ['Article 22', 'Fundamental Rights', 'Judiciary'],
-  },
-  {
-    id: '4',
-    title: 'RBI Monetary Policy Committee Keeps Repo Rate Unchanged at 6.5% Amid Softening Inflation',
-    source: 'The Hindu',
-    date: '23 Aug 2026',
-    category: 'ECONOMY',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'Core CPI inflation stabilized at 3.8% in July. MPC maintains accommodative stance to support growth recovery while keeping inflation within target band.',
-    topics: ['RBI', 'Monetary Policy', 'Inflation', 'Interest Rates'],
-  },
-  {
-    id: '5',
-    title: 'QUAD Summit 2026: Leaders Announce Indo-Pacific Maritime Domain Awareness Initiative',
-    source: 'Indian Express',
-    date: '23 Aug 2026',
-    category: 'IR',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'PM Modi, Presidents Biden, Albanese, and PM Kishida unveil shared satellite-based surveillance to monitor illegal fishing and maritime security threats.',
-    topics: ['QUAD', 'Indo-Pacific', 'Maritime Security'],
-  },
-  {
-    id: '6',
-    title: 'National Education Policy 2020: States Report 85% Implementation of Mother-Tongue Instruction',
-    source: 'Hindustan Times',
-    date: '23 Aug 2026',
-    category: 'GOVERNANCE',
-    importance: 'NORMAL',
-    gsPaper: 'GS-II',
-    summary: 'Education Ministry data shows majority of states have adopted regional language instruction up to Grade 5 under NEP framework.',
-    topics: ['NEP 2020', 'Education Reform', 'Multilingual Education'],
-  },
-  {
-    id: '7',
-    title: 'Western Ghats Receives UNESCO World Heritage Extension for 39 New Serial Sites',
-    source: 'The Hindu',
-    date: '22 Aug 2026',
-    category: 'ENVIRONMENT',
-    importance: 'HIGH',
-    gsPaper: 'GS-I',
-    summary: 'UNESCO expands Western Ghats heritage designation covering biodiversity hotspots across Kerala, Karnataka and Tamil Nadu. Kasturirangan Committee recommendations partly adopted.',
-    topics: ['UNESCO', 'Western Ghats', 'Biodiversity', 'Kasturirangan Report'],
-  },
-  {
-    id: '8',
-    title: 'ISRO Successfully Tests Reusable Launch Vehicle RLV-TD X3 from Sriharikota',
-    source: 'Press Information Bureau',
-    date: '22 Aug 2026',
-    category: 'SCIENCE_TECH',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'Third test of autonomous landing demonstrated 98.7% trajectory accuracy. India becomes the 4th country to achieve powered autonomous landing for orbital-class reusable rockets.',
-    topics: ['ISRO', 'RLV', 'Space Technology', 'Indigenous Tech'],
-  },
-  {
-    id: '9',
-    title: 'Parliament Passes Digital Personal Data Protection (Amendment) Bill 2026',
-    source: 'Indian Express',
-    date: '22 Aug 2026',
-    category: 'POLITY',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'Amendment introduces stricter cross-border data transfer norms, mandatory DPO appointment for companies handling >1 Cr data principals, and empowers Data Protection Board with appellate jurisdiction.',
-    topics: ['DPDP Act', 'Data Privacy', 'Digital Rights', 'Legislation'],
-  },
-  {
-    id: '10',
-    title: 'PM-KISAN Scheme: Government Announces 18th Installment with ₹2,000 Enhanced Benefit',
-    source: 'The Hindu',
-    date: '22 Aug 2026',
-    category: 'AGRICULTURE',
-    importance: 'NORMAL',
-    gsPaper: 'GS-III',
-    summary: 'Enhanced annual income support of ₹8,000 per farmer family approved. Coverage expanded to include landless agricultural workers in 5 pilot states.',
-    topics: ['PM-KISAN', 'Agricultural Subsidies', 'Rural Economy'],
-  },
-  {
-    id: '11',
-    title: 'India Signs Free Trade Agreement with EU After 16 Years of Negotiations',
-    source: 'Hindustan Times',
-    date: '22 Aug 2026',
-    category: 'ECONOMY',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'Comprehensive FTA covers goods, services, and investment. Tariff elimination on 90% of goods over 10 years. Includes sustainability and labor chapters.',
-    topics: ['India-EU FTA', 'International Trade', 'WTO'],
-  },
-  {
-    id: '12',
-    title: '16th Finance Commission Submits Interim Report on Fiscal Federalism Restructuring',
-    source: 'The Hindu',
-    date: '21 Aug 2026',
-    category: 'POLITY',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'Recommends increasing states\' share in central tax pool to 44%. Proposes performance-linked grants for urban local bodies and district-level governance.',
-    topics: ['Finance Commission', 'Fiscal Federalism', 'Tax Devolution'],
-  },
-  {
-    id: '13',
-    title: 'Chandrayaan-4 Sample Return Mission Approved by Union Cabinet',
-    source: 'Press Information Bureau',
-    date: '21 Aug 2026',
-    category: 'SCIENCE_TECH',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'ISRO to attempt robotic lunar sample return from south polar region. Mission budget ₹6,500 Cr with expected launch in Q4 2028.',
-    topics: ['Chandrayaan-4', 'ISRO', 'Lunar Exploration'],
-  },
-  {
-    id: '14',
-    title: 'India Achieves 200 GW Renewable Energy Installed Capacity Milestone',
-    source: 'Indian Express',
-    date: '21 Aug 2026',
-    category: 'ENVIRONMENT',
-    importance: 'NORMAL',
-    gsPaper: 'GS-III',
-    summary: 'Solar (120 GW) and wind (60 GW) lead the mix. MNRE targets 500 GW non-fossil capacity by 2030 under Paris Agreement commitments.',
-    topics: ['Renewable Energy', 'Climate Change', 'Paris Agreement', 'Solar Energy'],
-  },
-  {
-    id: '15',
-    title: 'NITI Aayog Releases Multidimensional Poverty Index 2026: Poverty Reduced to 8.2%',
-    source: 'The Hindu',
-    date: '21 Aug 2026',
-    category: 'SOCIETY',
-    importance: 'NORMAL',
-    gsPaper: 'GS-I',
-    summary: 'MPI shows 13.5 Cr people exited multidimensional poverty since 2015. Bihar, UP, and MP show maximum improvement. Urban-rural gap narrows.',
-    topics: ['MPI', 'Poverty Reduction', 'NITI Aayog', 'SDGs'],
-  },
-  {
-    id: '16',
-    title: 'INS Arighat: India Commissions Second Nuclear-Powered Ballistic Missile Submarine',
-    source: 'Hindustan Times',
-    date: '21 Aug 2026',
-    category: 'DEFENCE',
-    importance: 'HIGH',
-    gsPaper: 'GS-III',
-    summary: 'INS Arighat strengthens India\'s nuclear triad capability. Equipped with K-4 submarine-launched ballistic missiles with 3,500 km range.',
-    topics: ['Nuclear Triad', 'Indian Navy', 'Strategic Defence'],
-  },
-  {
-    id: '17',
-    title: 'Election Commission Recommends Simultaneous Elections Framework to Law Ministry',
-    source: 'The Hindu',
-    date: '20 Aug 2026',
-    category: 'POLITY',
-    importance: 'NORMAL',
-    gsPaper: 'GS-II',
-    summary: 'Draft framework proposes phased implementation: Lok Sabha + State Assemblies synchronization by 2029. Requires constitutional amendments to Articles 83, 172, 356.',
-    topics: ['One Nation One Election', 'Electoral Reform', 'Constitutional Amendment'],
-  },
-  {
-    id: '18',
-    title: 'India-Middle East-Europe Economic Corridor (IMEC): First Phase Construction Begins',
-    source: 'Indian Express',
-    date: '20 Aug 2026',
-    category: 'IR',
-    importance: 'HIGH',
-    gsPaper: 'GS-II',
-    summary: 'Port connectivity infrastructure between Mumbai and Haifa initiated. Rail and shipping route to reduce India-Europe goods transit time by 40%.',
-    topics: ['IMEC', 'Connectivity', 'Infrastructure', 'Geopolitics'],
-  },
-  {
-    id: '19',
-    title: 'National Green Tribunal Orders Complete Ban on Single-Use Plastics Near River Floodplains',
-    source: 'The Hindu',
-    date: '20 Aug 2026',
-    category: 'ENVIRONMENT',
-    importance: 'NORMAL',
-    gsPaper: 'GS-III',
-    summary: 'NGT expands plastic-free zones to include all major river floodplains (Ganga, Yamuna, Narmada, Godavari). Local bodies given 6-month compliance deadline.',
-    topics: ['NGT', 'Plastic Pollution', 'River Conservation'],
-  },
-  {
-    id: '20',
-    title: 'Cabinet Approves National Urban Digital Mission for Smart City 2.0 Infrastructure',
-    source: 'Press Information Bureau',
-    date: '20 Aug 2026',
-    category: 'GOVERNANCE',
-    importance: 'NORMAL',
-    gsPaper: 'GS-II',
-    summary: 'NUDM integrates urban governance platforms across 500 cities. Unified digital property registry, water supply monitoring, and citizen grievance redressal.',
-    topics: ['Smart Cities', 'Urban Governance', 'E-Governance', 'Digital India'],
-  },
-];
+const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect, availableDates, onClose }) => {
+  const initial = selectedDate ? new Date(selectedDate + 'T00:00:00') : new Date();
+  const [viewYear, setViewYear] = useState(initial.getFullYear());
+  const [viewMonth, setViewMonth] = useState(initial.getMonth());
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(viewYear - 1); setViewMonth(11); }
+    else setViewMonth(viewMonth - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(viewYear + 1); setViewMonth(0); }
+    else setViewMonth(viewMonth + 1);
+  };
+
+  const toDateStr = (day: number) => {
+    const m = String(viewMonth + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${viewYear}-${m}-${d}`;
+  };
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  return (
+    <div
+      style={{ backgroundColor: '#0f172a' }}
+      className="border border-indigo-500/40 rounded-3xl p-5 w-[340px] max-w-full shadow-2xl shadow-black ring-1 ring-white/10 relative z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevMonth}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <h3 className="text-sm font-bold text-white tracking-wide">
+            {MONTH_NAMES[viewMonth]} {viewYear}
+          </h3>
+          <button
+            onClick={nextMonth}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+          title="Close Calendar"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Day labels */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {DAY_LABELS.map((d) => (
+          <div key={d} className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider py-1">
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+          <div key={`empty-${i}`} className="w-full aspect-square" />
+        ))}
+
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const day = i + 1;
+          const dateStr = toDateStr(day);
+          const isSelected = dateStr === selectedDate;
+          const isToday = dateStr === todayStr;
+          const hasNews = availableDates.has(dateStr);
+          const isFuture = new Date(dateStr) > today;
+
+          return (
+            <button
+              key={day}
+              disabled={isFuture}
+              onClick={() => { onSelect(dateStr); onClose(); }}
+              className={`
+                w-full aspect-square rounded-xl text-xs font-semibold transition-all relative flex items-center justify-center
+                ${isSelected
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/50 ring-2 ring-indigo-400 font-bold'
+                  : isToday
+                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 font-bold'
+                    : hasNews
+                      ? 'bg-slate-800 text-white hover:bg-indigo-600/40 hover:text-indigo-200 cursor-pointer'
+                      : isFuture
+                        ? 'text-slate-700 cursor-not-allowed'
+                        : 'text-slate-500 hover:bg-slate-800/60 hover:text-slate-300 cursor-pointer'
+                }
+              `}
+            >
+              {day}
+              {hasNews && !isSelected && (
+                <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+        <div className="flex items-center gap-3 text-[11px] text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" /> News Available
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded bg-indigo-600" /> Selected
+          </span>
+        </div>
+        <button
+          onClick={() => { onSelect(todayStr); onClose(); }}
+          className="px-2.5 py-1 rounded-lg bg-indigo-500/20 hover:bg-indigo-500/30 text-xs font-bold text-indigo-300 transition-colors"
+        >
+          Today
+        </button>
+      </div>
+    </div>
+  );
+};
+
+function formatDateHeading(dateStr: string): string {
+  if (dateStr === 'ALL') return 'All Current Affairs (Recent)';
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+
+  const formatted = d.toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  if (dateStr === todayStr) return `Today — ${formatted}`;
+  if (dateStr === yesterdayStr) return `Yesterday — ${formatted}`;
+  return formatted;
+}
 
 const gsFilters = ['ALL', 'GS-I', 'GS-II', 'GS-III', 'GS-IV'];
 const categoryFilters = [
@@ -282,16 +213,48 @@ const categoryFilters = [
 
 export const NewsFeed: React.FC = () => {
   const navigate = useNavigate();
+  const availableDatesList = useMemo(() => getAvailableNewsDates(), []);
+  const availableDatesSet = useMemo(() => new Set(availableDatesList), [availableDatesList]);
+  
+  // Default to today if available, else latest available news date
+  const defaultDate = availableDatesList.length > 0 ? availableDatesList[0] : '2026-08-24';
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const [selectedDate, setSelectedDate] = useState<string>(
+    availableDatesSet.has(todayStr) ? todayStr : defaultDate
+  );
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGS, setSelectedGS] = useState('ALL');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [showOnlyHigh, setShowOnlyHigh] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
 
-  const filtered = allNews.filter((item) => {
+  // Navigate to previous/next day
+  const goDay = (offset: number) => {
+    if (selectedDate === 'ALL') {
+      setSelectedDate(todayStr);
+      return;
+    }
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + offset);
+    if (d <= new Date()) {
+      const nextDateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      setSelectedDate(nextDateStr);
+    }
+  };
+
+  const filtered = ALL_NEWS_ITEMS.filter((item) => {
+    // Date filter
+    if (selectedDate !== 'ALL' && item.dateIso !== selectedDate) return false;
+    // GS Paper filter
     if (selectedGS !== 'ALL' && item.gsPaper !== selectedGS) return false;
+    // Category filter
     if (selectedCategory !== 'ALL' && item.category !== selectedCategory) return false;
+    // High importance filter
     if (showOnlyHigh && item.importance !== 'HIGH') return false;
+    // Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -306,30 +269,127 @@ export const NewsFeed: React.FC = () => {
   const visible = filtered.slice(0, visibleCount);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold mb-2">
             <Flame className="w-3.5 h-3.5" />
-            <span>UPSC-Relevant Current Affairs</span>
+            <span>Daily UPSC Current Affairs & Editorial Analysis</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            Important News Feed
+            Today's News & Analysis
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            AI-curated news articles tagged by GS Paper, topic relevance, and importance for UPSC preparation.
+            Curated daily current affairs tagged by GS Paper (GS-I to GS-IV), syllabus themes, and exam relevance.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-sm text-slate-400">
-          <Clock className="w-4 h-4" />
-          <span>Last updated: {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <Clock className="w-4 h-4 text-indigo-400" />
+          <span>Updated Daily · 24 Aug 2026</span>
+        </div>
+      </div>
+
+      {/* ─── Date Navigator Bar ───────────────────────────── */}
+      <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-30">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {/* Left: Prev/Next Day + Current Date Display */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => goDay(-1)}
+              className="p-2 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              title="Previous day"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <div className="text-center min-w-[220px]">
+              <h2 className="text-base font-bold text-white">
+                {formatDateHeading(selectedDate)}
+              </h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {filtered.length} article{filtered.length !== 1 ? 's' : ''} for this date
+              </p>
+            </div>
+
+            <button
+              onClick={() => goDay(1)}
+              disabled={selectedDate >= todayStr || selectedDate === 'ALL'}
+              className={`p-2 rounded-xl transition-colors ${
+                selectedDate >= todayStr || selectedDate === 'ALL'
+                  ? 'text-slate-700 cursor-not-allowed'
+                  : 'hover:bg-slate-800 text-slate-400 hover:text-white'
+              }`}
+              title="Next day"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Right: Date filter actions + Calendar Picker */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* All Dates toggle */}
+            <button
+              onClick={() => setSelectedDate(selectedDate === 'ALL' ? todayStr : 'ALL')}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                selectedDate === 'ALL'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700'
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>{selectedDate === 'ALL' ? 'Viewing All Dates' : 'All Dates'}</span>
+            </button>
+
+            {/* Calendar button with dropdown */}
+            <div className="relative z-50">
+              <button
+                onClick={() => setCalendarOpen(!calendarOpen)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  calendarOpen
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                }`}
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Calendar</span>
+              </button>
+
+              {/* Dropdown positioned directly below Calendar button */}
+              {calendarOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setCalendarOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <CalendarPicker
+                      selectedDate={selectedDate}
+                      onSelect={setSelectedDate}
+                      availableDates={availableDatesSet}
+                      onClose={() => setCalendarOpen(false)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Today shortcut */}
+            {selectedDate !== todayStr && (
+              <button
+                onClick={() => setSelectedDate(todayStr)}
+                className="px-3 py-2 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors"
+              >
+                Today
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
       <div className="glass-panel p-4 rounded-2xl border border-slate-800 space-y-4">
-        {/* Search */}
+        {/* Search Input */}
         <div className="relative">
           <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
           <input
@@ -401,10 +461,11 @@ export const NewsFeed: React.FC = () => {
         <span className="font-bold text-white">{filtered.length}</span> articles
         {selectedGS !== 'ALL' && <span className="text-indigo-400"> • {selectedGS}</span>}
         {selectedCategory !== 'ALL' && <span className="text-indigo-400"> • {selectedCategory.replace('_', ' ')}</span>}
+        {selectedDate !== 'ALL' && <span className="text-emerald-400"> • {selectedDate}</span>}
       </div>
 
       {/* News List */}
-      <div className="space-y-4">
+      <div className="space-y-4 relative z-10">
         {visible.map((item) => (
           <div
             key={item.id}
@@ -422,7 +483,7 @@ export const NewsFeed: React.FC = () => {
                 <span className="text-xs text-slate-400 font-medium">{item.source} • {item.date}</span>
               </div>
               {item.importance === 'HIGH' && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/15 text-rose-400 border border-rose-500/30 animate-pulse">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/15 text-rose-400 border border-rose-500/30">
                   HIGH RELEVANCE
                 </span>
               )}
@@ -430,7 +491,7 @@ export const NewsFeed: React.FC = () => {
 
             <h3
               className="font-bold text-slate-100 text-base leading-snug hover:text-indigo-400 cursor-pointer transition-colors"
-              onClick={() => navigate(`/news/${item.id}`)}
+              onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
             >
               {item.title}
             </h3>
@@ -453,11 +514,11 @@ export const NewsFeed: React.FC = () => {
 
             <div className="pt-2 flex items-center justify-between border-t border-slate-800/60">
               <button
-                onClick={() => navigate(`/ai/analysis/${item.id}`)}
+                onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
                 className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>UPSC AI Analysis</span>
+                <span>UPSC AI Analysis & Model Answer</span>
               </button>
 
               <button className="text-slate-400 hover:text-amber-300 text-xs flex items-center gap-1 transition-colors">
@@ -484,10 +545,16 @@ export const NewsFeed: React.FC = () => {
 
       {/* Empty State */}
       {filtered.length === 0 && (
-        <div className="text-center py-16 space-y-3">
+        <div className="text-center py-16 space-y-3 glass-panel rounded-2xl border border-slate-800">
           <Search className="w-12 h-12 text-slate-600 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-400">No articles found</h3>
-          <p className="text-sm text-slate-500">Try adjusting your filters or search query.</p>
+          <h3 className="text-lg font-bold text-slate-400">No articles for this date or filter</h3>
+          <p className="text-sm text-slate-500">Try selecting another date from the calendar or switching to "All Dates".</p>
+          <button
+            onClick={() => setSelectedDate('ALL')}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all mt-2"
+          >
+            View All Current Affairs
+          </button>
         </div>
       )}
     </div>

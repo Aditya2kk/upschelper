@@ -19,6 +19,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { ALL_NEWS_ITEMS } from '../services/newsData';
 
 export const HomeDashboard: React.FC = () => {
   const { user } = useAuthStore();
@@ -32,88 +33,7 @@ export const HomeDashboard: React.FC = () => {
     }
   };
 
-  const sampleNews = [
-    {
-      id: '1',
-      title: 'India-China Bilateral Dialogue on Border Disengagement Advances in Eastern Ladakh',
-      source: 'The Hindu',
-      date: '23 Aug 2026',
-      category: 'GEOPOLITICS',
-      importance: 'HIGH',
-      gsPaper: 'GS-II',
-      summary: 'Special Representatives met to review diplomatic and military channels for complete disengagement along LAC.',
-    },
-    {
-      id: '2',
-      title: 'India Semiconductor Mission Approves Phase-II Fabrication Plants in Gujarat & Tamil Nadu',
-      source: 'Indian Express',
-      date: '23 Aug 2026',
-      category: 'SCIENCE_TECH',
-      importance: 'HIGH',
-      gsPaper: 'GS-III',
-      summary: 'Union Cabinet approves ₹45,000 Cr outlay for sub-10nm chip manufacturing and R&D ecosystem.',
-    },
-    {
-      id: '3',
-      title: 'Supreme Court Standardizes Guidelines on Preventive Detention under Article 22',
-      source: 'Press Information Bureau',
-      date: '23 Aug 2026',
-      category: 'POLITY',
-      importance: 'HIGH',
-      gsPaper: 'GS-II',
-      summary: 'Constitution Bench mandates strict adherence to procedural safeguards and 90-day review limits.',
-    },
-    {
-      id: '4',
-      title: 'RBI Monetary Policy Committee Keeps Repo Rate Unchanged at 6.5% Amid Softening Inflation',
-      source: 'The Hindu',
-      date: '23 Aug 2026',
-      category: 'ECONOMY',
-      importance: 'HIGH',
-      gsPaper: 'GS-III',
-      summary: 'Core CPI inflation stabilized at 3.8% in July. MPC maintains accommodative stance to support growth recovery.',
-    },
-    {
-      id: '5',
-      title: 'QUAD Summit 2026: Leaders Announce Indo-Pacific Maritime Domain Awareness Initiative',
-      source: 'Indian Express',
-      date: '23 Aug 2026',
-      category: 'IR',
-      importance: 'HIGH',
-      gsPaper: 'GS-II',
-      summary: 'PM Modi, Presidents Biden, Albanese, and PM Kishida unveil shared satellite-based surveillance for maritime security.',
-    },
-    {
-      id: '6',
-      title: 'Western Ghats Receives UNESCO World Heritage Extension for 39 New Serial Sites',
-      source: 'The Hindu',
-      date: '22 Aug 2026',
-      category: 'ENVIRONMENT',
-      importance: 'HIGH',
-      gsPaper: 'GS-I',
-      summary: 'UNESCO expands Western Ghats heritage designation covering biodiversity hotspots across Kerala, Karnataka and Tamil Nadu.',
-    },
-    {
-      id: '7',
-      title: 'ISRO Successfully Tests Reusable Launch Vehicle RLV-TD X3 from Sriharikota',
-      source: 'Press Information Bureau',
-      date: '22 Aug 2026',
-      category: 'SCIENCE_TECH',
-      importance: 'HIGH',
-      gsPaper: 'GS-III',
-      summary: 'Third test demonstrated 98.7% trajectory accuracy. India becomes the 4th country to achieve powered autonomous landing.',
-    },
-    {
-      id: '8',
-      title: 'India Signs Free Trade Agreement with EU After 16 Years of Negotiations',
-      source: 'Hindustan Times',
-      date: '22 Aug 2026',
-      category: 'ECONOMY',
-      importance: 'HIGH',
-      gsPaper: 'GS-III',
-      summary: 'Comprehensive FTA covers goods, services, and investment. Tariff elimination on 90% of goods over 10 years.',
-    },
-  ];
+  const sampleNews = ALL_NEWS_ITEMS.slice(0, 8);
 
   return (
     <div className="space-y-8">

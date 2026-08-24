@@ -11,20 +11,20 @@ export const api = axios.create({
 
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
-  (config) => {
+  (config: any) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: any) => Promise.reject(error)
 );
 
 // Response interceptor for token refresh / auth error handling
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  (response: any) => response,
+  async (error: any) => {
     const originalRequest = error.config;
     
     if (error.response?.status === 401 && !originalRequest._retry) {
