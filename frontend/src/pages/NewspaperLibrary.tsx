@@ -259,17 +259,20 @@ export const NewspaperLibrary: React.FC = () => {
     return true;
   });
 
+  const [readingPaper, setReadingPaper] = useState<NewspaperItem | null>(null);
+
   const handleDownload = (paper: NewspaperItem) => {
     const link = document.createElement('a');
     link.href = paper.pdfUrl;
-    link.download = paper.filename;
+    link.download = paper.filename || `${paper.title}.pdf`;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const handleReadPdf = (paper: NewspaperItem) => {
-    window.open(paper.pdfUrl, '_blank');
+    setReadingPaper(paper);
   };
 
   // Navigate to previous/next day
@@ -570,13 +573,68 @@ export const NewspaperLibrary: React.FC = () => {
         </div>
       )}
 
-      {/* Footer stats */}
-      {manifest && (
-        <div className="text-center text-[11px] text-slate-600 pt-4">
-          {manifest.totalPapers} total papers in library
-          {manifest.lastFetch && (
-            <> · Last synced {new Date(manifest.lastFetch).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</>
-          )}
+      {/* ─── Embedded PDF Reader Modal ──────────────────────── */}
+      {readingPaper && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div
+            style={{ backgroundColor: '#0f172a' }}
+            className="w-full max-w-6xl h-[92vh] rounded-2xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/10"
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 border-b border-slate-800 bg-slate-900 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-xl bg-blue-500/20 border border-blue-500/30 text-blue-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-base font-bold text-white truncate">
+                    {readingPaper.title}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {readingPaper.displayDate || readingPaper.editionDate} · {readingPaper.fileSizeMB} MB
+                  </p>
+                </div>
+              </div>
+
+              {/* Header Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => handleDownload(readingPaper)}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+
+                <a
+                  href={readingPaper.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">New Tab</span>
+                </a>
+
+                <button
+                  onClick={() => setReadingPaper(null)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                  title="Close Reader"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: PDF Viewer iframe */}
+            <div className="flex-1 bg-slate-950 relative">
+              <iframe
+                src={`${readingPaper.pdfUrl}#toolbar=1&navpanes=1`}
+                title={readingPaper.title}
+                className="w-full h-full border-none"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
