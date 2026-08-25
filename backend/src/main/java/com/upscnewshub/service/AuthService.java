@@ -22,9 +22,13 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -79,6 +83,7 @@ public class AuthService {
                 .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(userRole)
+                .lastLoginAt(LocalDateTime.now())
                 .build();
 
         user = userRepository.save(user);
@@ -94,7 +99,7 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, String clientIp, String userAgent) {
         String normalizedEmail = request.getEmail().trim().toLowerCase();
 
         // Check if account is temporarily locked out due to excessive failed attempts
@@ -136,6 +141,16 @@ public class AuthService {
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new BadRequestException("User not found"));
 
+        // Record last login timestamp, IP address, and User-Agent
+        user.setLastLoginAt(LocalDateTime.now());
+        if (clientIp != null && !clientIp.isEmpty()) {
+            user.setLastLoginIp(clientIp);
+        }
+        if (userAgent != null && !userAgent.isEmpty()) {
+            user.setUserAgent(userAgent.length() > 490 ? userAgent.substring(0, 490) : userAgent);
+        }
+        user = userRepository.save(user);
+
         String accessToken = tokenProvider.generateToken(authentication);
 
         // Delete old refresh tokens for user
@@ -150,6 +165,11 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse login(LoginRequest request) {
+        return login(request, null, null);
+    }
+
+    @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
                 .orElseThrow(() -> new BadRequestException("Invalid refresh token"));
@@ -160,10 +180,10 @@ public class AuthService {
         }
 
         User user = refreshToken.getUser();
-        String newAccessToken = tokenProvider.generateTokenFromUserId(user.getId(), user.getEmail(), user.getRole());
+        String accessToken = tokenProvider.generateTokenFromUserId(user.getId(), user.getEmail(), user.getRole());
 
         return AuthResponse.builder()
-                .accessToken(newAccessToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
                 .user(mapToUserDto(user))
                 .build();
@@ -198,6 +218,9 @@ public class AuthService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .avatarUrl(user.getAvatarUrl())
+                .lastLoginAt(user.getLastLoginAt())
+                .lastLoginIp(user.getLastLoginIp())
+                .userAgent(user.getUserAgent())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

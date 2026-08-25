@@ -10,7 +10,7 @@ import { NewsItem, ALL_NEWS_ITEMS } from './newsData';
 
 const LIVE_FEEDS = [
   {
-    name: 'The Hindu',
+    name: 'The Hindu National',
     url: 'https://www.thehindu.com/news/national/feeder/default.rss',
     defaultCategory: 'POLITY'
   },
@@ -20,14 +20,54 @@ const LIVE_FEEDS = [
     defaultCategory: 'GEOPOLITICS'
   },
   {
+    name: 'The Hindu Business',
+    url: 'https://www.thehindu.com/business/feeder/default.rss',
+    defaultCategory: 'ECONOMY'
+  },
+  {
+    name: 'The Hindu Science & Tech',
+    url: 'https://www.thehindu.com/sci-tech/science/feeder/default.rss',
+    defaultCategory: 'SCIENCE_TECH'
+  },
+  {
     name: 'Indian Express Explained',
     url: 'https://indianexpress.com/section/explained/feed/',
     defaultCategory: 'CURRENT_AFFAIRS'
   },
   {
-    name: 'Indian Express',
+    name: 'Indian Express India',
     url: 'https://indianexpress.com/section/india/feed/',
     defaultCategory: 'GOVERNANCE'
+  },
+  {
+    name: 'Indian Express World',
+    url: 'https://indianexpress.com/section/world/feed/',
+    defaultCategory: 'GEOPOLITICS'
+  },
+  {
+    name: 'Indian Express Economy',
+    url: 'https://indianexpress.com/section/business/feed/',
+    defaultCategory: 'ECONOMY'
+  },
+  {
+    name: 'LiveMint Economy & Policy',
+    url: 'https://www.livemint.com/rss/economy',
+    defaultCategory: 'ECONOMY'
+  },
+  {
+    name: 'LiveMint Technology & AI',
+    url: 'https://www.livemint.com/rss/technology',
+    defaultCategory: 'SCIENCE_TECH'
+  },
+  {
+    name: 'BBC World News',
+    url: 'https://feeds.bbci.co.uk/news/world/rss.xml',
+    defaultCategory: 'GEOPOLITICS'
+  },
+  {
+    name: 'BBC South Asia & India',
+    url: 'https://feeds.bbci.co.uk/news/world/asia/india/rss.xml',
+    defaultCategory: 'GEOPOLITICS'
   }
 ];
 

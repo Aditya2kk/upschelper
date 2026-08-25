@@ -25,9 +25,28 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        String userAgent = httpRequest != null ? httpRequest.getHeader("User-Agent") : null;
+        AuthResponse response = authService.login(request, clientIp, userAgent);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+    }
+
+    private String extractClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        if (request == null) return "127.0.0.1";
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp.trim();
+        }
+        String cfConnectingIp = request.getHeader("CF-Connecting-IP");
+        if (cfConnectingIp != null && !cfConnectingIp.isEmpty()) {
+            return cfConnectingIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @PostMapping("/refresh")
