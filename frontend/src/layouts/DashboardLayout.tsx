@@ -23,7 +23,7 @@ export const DashboardLayout: React.FC = () => {
       {/* Main Content Body */}
       <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
         <TopNav />
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto animate-fade-in">
+        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>

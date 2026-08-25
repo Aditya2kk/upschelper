@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   Sparkles,
@@ -302,8 +303,8 @@ export const HomeDashboard: React.FC = () => {
       </div>
 
       {/* ─── FULL ARTICLE READER MODAL ───────────────────────── */}
-      {readingArticle && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
+      {readingArticle && createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
           <div className="absolute inset-0 bg-transparent cursor-pointer" onClick={() => setReadingArticle(null)} />
 
           <div
@@ -414,7 +415,8 @@ export const HomeDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Flame, Sparkles, Bookmark, Filter, Search,
@@ -714,8 +715,8 @@ export const NewsFeed: React.FC = () => {
       )}
 
       {/* ─── FULL ARTICLE READER MODAL ───────────────────────── */}
-      {readingArticle && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
+      {readingArticle && createPortal(
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
           {/* Backdrop Click Dismiss */}
           <div className="absolute inset-0 bg-transparent cursor-pointer" onClick={handleCloseArticle} />
 
@@ -838,7 +839,7 @@ export const NewsFeed: React.FC = () => {
 
               {/* Topic Tags */}
               <div className="flex flex-wrap gap-1.5 pt-2">
-                {readingArticle.topics.map((topic) => (
+                {(readingArticle.topics || []).map((topic) => (
                   <span
                     key={topic}
                     className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700"
@@ -883,7 +884,8 @@ export const NewsFeed: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
