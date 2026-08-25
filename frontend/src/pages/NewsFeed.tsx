@@ -729,14 +729,14 @@ export const NewsFeed: React.FC = () => {
             <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/90 shrink-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
-                  {readingArticle.gsPaper}
+                  {readingArticle.gsPaper || 'GS-II'}
                 </span>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold uppercase border flex items-center gap-1 ${categoryColors[readingArticle.category] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                  {categoryIcons[readingArticle.category]}
-                  {readingArticle.category.replace('_', ' ')}
+                  {categoryIcons[readingArticle.category] || <Flame className="w-3.5 h-3.5" />}
+                  {(readingArticle.category || 'CURRENT_AFFAIRS').replace('_', ' ')}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
-                  {readingArticle.source} • {readingArticle.date}
+                  {readingArticle.source || 'UPSC NewsHub'} • {readingArticle.date || 'Today'}
                 </span>
               </div>
 
@@ -778,15 +778,17 @@ export const NewsFeed: React.FC = () => {
 
               {/* Full Article Text Narrative */}
               <div className="space-y-4 text-sm leading-relaxed text-slate-300 font-normal">
-                {readingArticle.fullArticle.split('\n\n').map((paragraph, idx) => (
-                  <p key={idx} className="text-slate-300 leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
+                {(readingArticle.fullArticle || readingArticle.summary || readingArticle.title)
+                  .split('\n\n')
+                  .map((paragraph, idx) => (
+                    <p key={idx} className="text-slate-300 leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))}
               </div>
 
               {/* Prelims Focus Pointers Box */}
-              {readingArticle.prelimsPoints && readingArticle.prelimsPoints.length > 0 && (
+              {Array.isArray(readingArticle.prelimsPoints) && readingArticle.prelimsPoints.length > 0 && (
                 <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900 border border-emerald-500/30 space-y-3">
                   <div className="flex items-center gap-2 text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
                     <Sparkles className="w-4 h-4" />
@@ -804,7 +806,7 @@ export const NewsFeed: React.FC = () => {
               )}
 
               {/* Mains Focus Dimensions Box */}
-              {readingArticle.mainsPoints && readingArticle.mainsPoints.length > 0 && (
+              {Array.isArray(readingArticle.mainsPoints) && readingArticle.mainsPoints.length > 0 && (
                 <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900 border border-indigo-500/30 space-y-3">
                   <div className="flex items-center gap-2 text-indigo-400 text-xs font-extrabold uppercase tracking-wider">
                     <Building2 className="w-4 h-4" />

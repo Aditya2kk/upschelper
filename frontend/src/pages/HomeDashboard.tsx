@@ -358,21 +358,23 @@ export const HomeDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-4 text-sm leading-relaxed text-slate-300 font-normal">
-                {readingArticle.fullArticle.split('\n\n').map((paragraph, idx) => (
-                  <p key={idx} className="text-slate-300 leading-relaxed">
-                    {paragraph}
-                  </p>
-                ))}
+                {(readingArticle.fullArticle || readingArticle.summary || readingArticle.title)
+                  .split('\n\n')
+                  .map((paragraph: string, idx: number) => (
+                    <p key={idx} className="text-slate-300 leading-relaxed">
+                      {paragraph}
+                    </p>
+                  ))}
               </div>
 
-              {readingArticle.prelimsPoints && readingArticle.prelimsPoints.length > 0 && (
+              {Array.isArray(readingArticle.prelimsPoints) && readingArticle.prelimsPoints.length > 0 && (
                 <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900 border border-emerald-500/30 space-y-3">
                   <div className="flex items-center gap-2 text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
                     <Sparkles className="w-4 h-4" />
                     <span>Prelims Key Facts & Pointers</span>
                   </div>
                   <ul className="space-y-2 text-xs text-slate-300">
-                    {readingArticle.prelimsPoints.map((point, idx) => (
+                    {readingArticle.prelimsPoints.map((point: string, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
                         <span>{point}</span>
@@ -382,14 +384,14 @@ export const HomeDashboard: React.FC = () => {
                 </div>
               )}
 
-              {readingArticle.mainsPoints && readingArticle.mainsPoints.length > 0 && (
+              {Array.isArray(readingArticle.mainsPoints) && readingArticle.mainsPoints.length > 0 && (
                 <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900 border border-indigo-500/30 space-y-3">
                   <div className="flex items-center gap-2 text-indigo-400 text-xs font-extrabold uppercase tracking-wider">
                     <Building2 className="w-4 h-4" />
                     <span>Mains Analytical Dimensions & Perspectives</span>
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-300">
-                    {readingArticle.mainsPoints.map((point, idx) => (
+                    {readingArticle.mainsPoints.map((point: string, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 mt-1.5" />
                         <span>{point}</span>
