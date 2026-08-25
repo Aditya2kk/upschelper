@@ -136,6 +136,46 @@ export function formatTimeAgo(isoString: string): string {
   }
 }
 
+function getLocalDateIso(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parsePubDateInfo(rawPubDate: any): { dateIso: string; dateFormatted: string } {
+  const today = new Date();
+  const todayIso = getLocalDateIso(today);
+  const todayFormatted = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  if (!rawPubDate) {
+    return { dateIso: todayIso, dateFormatted: todayFormatted };
+  }
+
+  // If string starts with YYYY-MM-DD, extract it directly without timezone shifting!
+  const match = String(rawPubDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, y, m, d] = match;
+    const dateObj = new Date(`${y}-${m}-${d}T12:00:00`);
+    return {
+      dateIso: `${y}-${m}-${d}`,
+      dateFormatted: !isNaN(dateObj.getTime())
+        ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : todayFormatted
+    };
+  }
+
+  const parsed = new Date(rawPubDate);
+  if (!isNaN(parsed.getTime())) {
+    return {
+      dateIso: getLocalDateIso(parsed),
+      dateFormatted: parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+  }
+
+  return { dateIso: todayIso, dateFormatted: todayFormatted };
+}
+
 let inMemoryLiveCache: NewsItem[] = [];
 let lastFetchedTimestamp = 0;
 
@@ -159,22 +199,18 @@ export async function fetchRealtimeBreakingNews(forceRefresh = false): Promise<N
 
       const data = await res.json();
       if (data.status === 'ok' && Array.isArray(data.items)) {
-        data.items.slice(0, 10).forEach((item: any, idx: number) => {
+        data.items.slice(0, 15).forEach((item: any, idx: number) => {
           const title = (item.title || '').replace(/<[^>]+>/g, '').trim();
           if (!title || title.length < 15) return;
 
           const desc = (item.description || '').replace(/<[^>]+>/g, '').trim();
-          const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
-          const dateIso = !isNaN(pubDate.getTime()) ? pubDate.toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-          const dateFormatted = !isNaN(pubDate.getTime())
-            ? pubDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-            : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+          const { dateIso, dateFormatted } = parsePubDateInfo(item.pubDate);
 
           const { category, gsPaper, syllabusTheme } = classifyLiveArticle(title, desc, feed.defaultCategory);
           const { prelimsPoints, mainsPoints, mainsQuestion, topics } = generateLiveUpscAnalysis(title, category, gsPaper);
 
           fetchedItems.push({
-            id: `realtime-${feed.name.toLowerCase().replace(/\s+/g, '-')}-${idx}-${pubDate.getTime() || Date.now()}`,
+            id: `realtime-${feed.name.toLowerCase().replace(/\s+/g, '-')}-${idx}-${item.pubDate ? new Date(item.pubDate).getTime() || Date.now() : Date.now()}`,
             title,
             source: feed.name,
             date: dateFormatted,

@@ -276,7 +276,8 @@ export const NewsFeed: React.FC = () => {
       setNewsList(live);
       setLastSyncTime(new Date());
       const dates = getAvailableNewsDates(live);
-      if (dates.length > 0 && (!selectedDate || !dates.includes(selectedDate))) {
+      const matchingCount = live.filter(n => n.dateIso === selectedDate).length;
+      if (matchingCount === 0 && dates.length > 0) {
         setSelectedDate(dates[0]);
       }
     } finally {
