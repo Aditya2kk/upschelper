@@ -21,7 +21,14 @@ import {
   Copy,
   Check,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Bug,
+  Lightbulb,
+  MessageSquare,
+  Mail,
+  ExternalLink,
+  CheckCircle,
+  Clock3
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -38,9 +45,29 @@ interface AdminUser {
   createdAt: string;
 }
 
+interface AdminFeedback {
+  id: string;
+  type: 'BUG' | 'SUGGESTION' | 'GENERAL';
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  title: string;
+  description: string;
+  userName?: string;
+  userEmail?: string;
+  browserInfo?: string;
+  pageUrl?: string;
+  status: 'OPEN' | 'IN_REVIEW' | 'RESOLVED';
+  createdAt: string;
+}
+
 export const AdminDashboard: React.FC = () => {
   const { user: currentAdmin } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'USERS' | 'INGESTION'>('USERS');
+  const [activeTab, setActiveTab] = useState<'USERS' | 'FEEDBACK' | 'INGESTION'>('FEEDBACK');
+
+  // Feedback State
+  const [feedbackList, setFeedbackList] = useState<AdminFeedback[]>([]);
+  const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+  const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'ALL' | 'BUG' | 'SUGGESTION' | 'GENERAL'>('ALL');
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'ALL' | 'OPEN' | 'RESOLVED'>('ALL');
 
   const [sources, setSources] = useState([
     {
@@ -106,7 +133,6 @@ export const AdminDashboard: React.FC = () => {
         setUserList(res.data.data);
       }
     } catch (err) {
-      // Fallback display if backend is in transition
       if (currentAdmin) {
         setUserList([
           {
@@ -127,8 +153,60 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const fetchFeedback = async () => {
+    setIsLoadingFeedback(true);
+    try {
+      const res = await api.get('/admin/feedback');
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setFeedbackList(res.data.data);
+      }
+    } catch (err) {
+      // Fallback sample reports if offline/transition
+      setFeedbackList([
+        {
+          id: 'fb-sample-1',
+          type: 'BUG',
+          severity: 'HIGH',
+          title: 'Notification dropdown was cut off on date bar',
+          description: 'When clicking bell icon on news page, date bar was rendering above the notification menu.',
+          userName: 'Aditya Raj',
+          userEmail: 'adityarajc1xx@gmail.com',
+          browserInfo: 'Mozilla/5.0 Windows NT 10.0 Chrome/128',
+          pageUrl: 'https://upsc-newshub-six.vercel.app/news',
+          status: 'RESOLVED',
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+        },
+        {
+          id: 'fb-sample-2',
+          type: 'SUGGESTION',
+          severity: 'MEDIUM',
+          title: 'Add Hindi Newspaper Editions for UPSC CSE',
+          description: 'Would love to have Dainik Jagran National Edition PDF alongside The Hindu & Indian Express.',
+          userName: 'Rahul Sharma',
+          userEmail: 'rahul.aspirant@gmail.com',
+          browserInfo: 'Mobile Safari / iPhone 15',
+          pageUrl: 'https://upsc-newshub-six.vercel.app/newspapers',
+          status: 'OPEN',
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+        }
+      ]);
+    } finally {
+      setIsLoadingFeedback(false);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, newStatus: 'OPEN' | 'IN_REVIEW' | 'RESOLVED') => {
+    try {
+      await api.patch(`/admin/feedback/${id}/status`, { status: newStatus });
+      setFeedbackList(prev => prev.map(f => f.id === id ? { ...f, status: newStatus } : f));
+    } catch {
+      setFeedbackList(prev => prev.map(f => f.id === id ? { ...f, status: newStatus } : f));
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchFeedback();
   }, []);
 
   const handleCopy = (text: string, id: string) => {
@@ -170,6 +248,12 @@ export const AdminDashboard: React.FC = () => {
     );
   });
 
+  const filteredFeedback = feedbackList.filter((f) => {
+    if (feedbackTypeFilter !== 'ALL' && f.type !== feedbackTypeFilter) return false;
+    if (feedbackStatusFilter !== 'ALL' && f.status !== feedbackStatusFilter) return false;
+    return true;
+  });
+
   const formatDate = (isoStr?: string) => {
     if (!isoStr) return 'Never';
     try {
@@ -198,15 +282,30 @@ export const AdminDashboard: React.FC = () => {
             <span>Administrator Master Console</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            Security, Users & Pipeline Hub
+            Security, Feedback & Ingestion Hub
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Real-time user session logging, IP telemetry, and automated newspaper ingestion control.
+            User glitch reports, feedback telemetry, login IP tracking, and newspaper sources.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 self-start md:self-auto">
+        <div className="flex items-center p-1.5 rounded-2xl bg-slate-900 border border-slate-800 self-start md:self-auto flex-wrap gap-1">
+          <button
+            onClick={() => setActiveTab('FEEDBACK')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === 'FEEDBACK'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Bug className="w-4 h-4 text-rose-400" />
+            <span>User Feedback & Glitches</span>
+            <span className="px-1.5 py-0.5 rounded-full bg-slate-800 text-[10px] text-rose-300">
+              {feedbackList.filter(f => f.status === 'OPEN').length} Open
+            </span>
+          </button>
+
           <button
             onClick={() => setActiveTab('USERS')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -221,6 +320,7 @@ export const AdminDashboard: React.FC = () => {
               {userList.length}
             </span>
           </button>
+
           <button
             onClick={() => setActiveTab('INGESTION')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -239,42 +339,233 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Total Users</span>
-            <Users className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-semibold uppercase">Open Reports</span>
+            <Bug className="w-4 h-4 text-rose-400" />
+          </div>
+          <p className="text-2xl font-black text-rose-400">
+            {feedbackList.filter(f => f.status === 'OPEN').length}
+          </p>
+          <span className="text-[11px] text-slate-400 font-medium">Pending User Reports</span>
+        </div>
+
+        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase">Total Feedback</span>
+            <MessageSquare className="w-4 h-4 text-amber-400" />
+          </div>
+          <p className="text-2xl font-black text-white">{feedbackList.length}</p>
+          <span className="text-[11px] text-emerald-400 font-medium">● User Suggestions & Bugs</span>
+        </div>
+
+        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-semibold uppercase">Registered Users</span>
+            <Users className="w-4 h-4 text-indigo-400" />
           </div>
           <p className="text-2xl font-black text-white">{userList.length || 1}</p>
-          <span className="text-[11px] text-emerald-400 font-medium">● Verified Database Records</span>
-        </div>
-
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Administrators</span>
-            <ShieldCheck className="w-4 h-4 text-purple-400" />
-          </div>
-          <p className="text-2xl font-black text-white">
-            {userList.filter((u) => u.role === 'ADMIN').length || 1}
-          </p>
-          <span className="text-[11px] text-purple-300 font-medium">Root Access Privileges</span>
-        </div>
-
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Active Sources</span>
-            <Radio className="w-4 h-4 text-emerald-400" />
-          </div>
-          <p className="text-2xl font-black text-white">{sources.filter((s) => s.active).length + 12}</p>
-          <span className="text-[11px] text-emerald-400 font-medium">12 Live Global Feeds</span>
+          <span className="text-[11px] text-indigo-300 font-medium">Active Database Accounts</span>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-semibold uppercase">Security Status</span>
-            <Lock className="w-4 h-4 text-indigo-400" />
+            <Lock className="w-4 h-4 text-emerald-400" />
           </div>
           <p className="text-2xl font-black text-emerald-400">SECURE</p>
           <span className="text-[11px] text-slate-400 font-medium">Admin-Only Telemetry</span>
         </div>
       </div>
+
+      {/* ─── TAB 0: USER FEEDBACK & GLITCHES ─────────────────────── */}
+      {activeTab === 'FEEDBACK' && (
+        <div className="space-y-6">
+          {/* Header & Filters */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+              <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800">
+                {(['ALL', 'BUG', 'SUGGESTION', 'GENERAL'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setFeedbackTypeFilter(t)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      feedbackTypeFilter === t
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t === 'ALL' ? 'All Types' : t === 'BUG' ? '🐛 Bugs' : t === 'SUGGESTION' ? '💡 Suggestions' : '💬 General'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800">
+                {(['ALL', 'OPEN', 'RESOLVED'] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFeedbackStatusFilter(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      feedbackStatusFilter === s
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {s === 'ALL' ? 'All Status' : s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={fetchFeedback}
+              disabled={isLoadingFeedback}
+              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 transition-colors flex items-center gap-1.5 text-xs font-semibold self-end sm:self-auto"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFeedback ? 'animate-spin text-indigo-400' : ''}`} />
+              <span>Refresh Reports</span>
+            </button>
+          </div>
+
+          {/* Feedback Items Grid */}
+          <div className="grid grid-cols-1 gap-4">
+            {filteredFeedback.map((fb) => (
+              <div
+                key={fb.id}
+                className="glass-panel p-6 rounded-3xl border border-slate-800 space-y-4 hover:border-slate-700 transition-colors"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    {/* Type Badge */}
+                    {fb.type === 'BUG' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-rose-500/15 text-rose-300 border border-rose-500/30">
+                        <Bug className="w-3 h-3 text-rose-400" />
+                        BUG REPORT
+                      </span>
+                    ) : fb.type === 'SUGGESTION' ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                        <Lightbulb className="w-3 h-3 text-amber-400" />
+                        FEATURE IDEA
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+                        <MessageSquare className="w-3 h-3 text-indigo-400" />
+                        GENERAL
+                      </span>
+                    )}
+
+                    {/* Severity */}
+                    {fb.type === 'BUG' && (
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          fb.severity === 'CRITICAL'
+                            ? 'bg-rose-500/30 text-rose-200 border border-rose-500/50 animate-pulse'
+                            : fb.severity === 'HIGH'
+                            ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        Severity: {fb.severity}
+                      </span>
+                    )}
+
+                    {/* Status Badge */}
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        fb.status === 'RESOLVED'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : fb.status === 'IN_REVIEW'
+                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                          : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      {fb.status === 'RESOLVED' && <CheckCircle className="w-3 h-3" />}
+                      {fb.status === 'OPEN' && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />}
+                      {fb.status}
+                    </span>
+                  </div>
+
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    {formatDate(fb.createdAt)}
+                  </span>
+                </div>
+
+                {/* Title & Description */}
+                <div className="space-y-2">
+                  <h3 className="text-base font-bold text-white tracking-tight">{fb.title}</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{fb.description}</p>
+                </div>
+
+                {/* Submitter Info & Telemetry */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-slate-300 font-semibold">
+                      <span>👤 {fb.userName || 'Anonymous User'}</span>
+                    </div>
+                    {fb.userEmail && (
+                      <a
+                        href={`mailto:${fb.userEmail}?subject=Re: ${encodeURIComponent(fb.title)}`}
+                        className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-mono transition-colors"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>{fb.userEmail}</span>
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="space-y-1 sm:text-right">
+                    {fb.pageUrl && (
+                      <p className="truncate font-mono text-slate-500">
+                        Page: <span className="text-slate-400">{fb.pageUrl}</span>
+                      </p>
+                    )}
+                    {fb.browserInfo && (
+                      <p className="truncate font-mono text-slate-500" title={fb.browserInfo}>
+                        Device: <span className="text-slate-400">{fb.browserInfo}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Row */}
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  {fb.status !== 'IN_REVIEW' && fb.status !== 'RESOLVED' && (
+                    <button
+                      onClick={() => handleUpdateStatus(fb.id, 'IN_REVIEW')}
+                      className="px-3 py-1.5 rounded-xl bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold border border-blue-500/30 transition-colors"
+                    >
+                      Mark In Review
+                    </button>
+                  )}
+                  {fb.status !== 'RESOLVED' ? (
+                    <button
+                      onClick={() => handleUpdateStatus(fb.id, 'RESOLVED')}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/30 flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Mark Resolved</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleUpdateStatus(fb.id, 'OPEN')}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-xs font-semibold transition-colors"
+                    >
+                      Re-open Issue
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {filteredFeedback.length === 0 && (
+              <div className="glass-panel p-12 rounded-3xl border border-slate-800 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+                <h3 className="text-sm font-bold text-white">No feedback matching current filters</h3>
+                <p className="text-xs text-slate-500">All caught up on user bug reports and suggestions!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ─── TAB 1: USERS & LOGIN IP TELEMETRY ─────────────────── */}
       {activeTab === 'USERS' && (

@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import {
   Search, Bell, Sparkles, LogOut, User as UserIcon,
   Command, Newspaper, Flame, FileText, CheckCircle2,
-  ExternalLink, Trash2, X
+  ExternalLink, Trash2, X, MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { FeedbackModal } from './FeedbackModal';
 
 interface NotificationItem {
   id: string;
@@ -63,6 +64,7 @@ export const TopNav: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
 
   const unreadCount = notifications.filter(n => n.unread).length;
@@ -104,7 +106,8 @@ export const TopNav: React.FC = () => {
   };
 
   return (
-    <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between gap-4">
+    <>
+      <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between gap-4">
       {/* Global Search Bar */}
       <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl relative">
         <div className="relative flex items-center">
@@ -283,6 +286,14 @@ export const TopNav: React.FC = () => {
                   </button>
 
                   <button
+                    onClick={() => { setIsProfileOpen(false); setIsFeedbackOpen(true); }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-amber-300 hover:bg-amber-500/10 transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Report Glitch / Feedback</span>
+                  </button>
+
+                  <button
                     onClick={() => {
                       setIsProfileOpen(false);
                       logout();
@@ -300,5 +311,9 @@ export const TopNav: React.FC = () => {
         </div>
       </div>
     </header>
+
+    {/* Feedback & Bug Report Modal */}
+    <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+    </>
   );
 };
