@@ -227,11 +227,8 @@ export const NewsFeed: React.FC = () => {
   
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  const defaultDate = availableDatesList.length > 0 ? availableDatesList[0] : todayStr;
 
-  const [selectedDate, setSelectedDate] = useState<string>(
-    availableDatesSet.has(todayStr) ? todayStr : defaultDate
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGS, setSelectedGS] = useState('ALL');
@@ -276,10 +273,14 @@ export const NewsFeed: React.FC = () => {
       const live = await fetchRealtimeBreakingNews(force);
       setNewsList(live);
       setLastSyncTime(new Date());
-      const dates = getAvailableNewsDates(live);
-      const matchingCount = live.filter(n => n.dateIso === selectedDate).length;
-      if (matchingCount === 0 && dates.length > 0) {
-        setSelectedDate(dates[0]);
+
+      // If today has live news, keep selectedDate locked to today unless user deliberately picked another date
+      const hasToday = live.some((n) => n.dateIso === todayStr);
+      if (hasToday) {
+        setSelectedDate((prev) => (prev === 'ALL' ? 'ALL' : (prev === todayStr ? todayStr : prev)));
+      } else {
+        const dates = getAvailableNewsDates(live);
+        setSelectedDate((prev) => (prev === 'ALL' ? 'ALL' : (dates.length > 0 ? dates[0] : todayStr)));
       }
     } finally {
       setIsSyncing(false);

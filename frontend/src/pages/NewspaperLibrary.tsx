@@ -202,7 +202,11 @@ function formatDateHeading(dateStr: string): string {
 // ─── Main Component ──────────────────────────────────────
 export const NewspaperLibrary: React.FC = () => {
   const navigate = useNavigate();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const getTodayDateStr = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+  const todayStr = getTodayDateStr();
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('ALL');
@@ -227,7 +231,9 @@ export const NewspaperLibrary: React.FC = () => {
         // Otherwise, automatically select the most recent available newspaper date.
         if (data.newspapers && data.newspapers.length > 0) {
           const hasToday = data.newspapers.some((n) => n.editionDate === todayStr);
-          if (!hasToday) {
+          if (hasToday) {
+            setSelectedDate(todayStr);
+          } else {
             const sortedDates = Array.from(new Set(data.newspapers.map((n) => n.editionDate))).sort().reverse();
             if (sortedDates.length > 0) {
               setSelectedDate(sortedDates[0]);
