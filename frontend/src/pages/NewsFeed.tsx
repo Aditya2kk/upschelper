@@ -241,6 +241,33 @@ export const NewsFeed: React.FC = () => {
 
   // Active reading article modal state
   const [readingArticle, setReadingArticle] = useState<NewsItem | null>(null);
+  const modalBodyRef = React.useRef<HTMLDivElement>(null);
+
+  // Lock background scrolling and reset modal scroll when article opens
+  useEffect(() => {
+    if (readingArticle) {
+      document.body.style.overflow = 'hidden';
+      if (modalBodyRef.current) {
+        modalBodyRef.current.scrollTop = 0;
+      }
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [readingArticle]);
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && readingArticle) {
+        handleCloseArticle();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [readingArticle]);
 
   const handleSyncNews = async (force = true) => {
     setIsSyncing(true);
@@ -731,7 +758,7 @@ export const NewsFeed: React.FC = () => {
             </div>
 
             {/* Modal Scrollable Body */}
-            <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-slate-200">
+            <div ref={modalBodyRef} className="p-6 md:p-8 overflow-y-auto space-y-6 text-slate-200 flex-1">
               {/* Article Headline */}
               <div>
                 <h1 className="text-xl md:text-2xl font-black text-white leading-tight">

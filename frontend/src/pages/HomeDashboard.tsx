@@ -16,7 +16,9 @@ import {
   CheckCircle2,
   Calendar,
   Zap,
-  BookOpen
+  BookOpen,
+  Building2,
+  X
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ALL_NEWS_ITEMS, NewsItem, getAllNews } from '../services/newsData';
@@ -27,6 +29,7 @@ export const HomeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [searchPrompt, setSearchPrompt] = useState('');
   const [newsList, setNewsList] = useState<NewsItem[]>(getAllNews());
+  const [readingArticle, setReadingArticle] = useState<NewsItem | null>(null);
 
   React.useEffect(() => {
     fetchRealtimeBreakingNews().then((items) => setNewsList(items));
@@ -38,6 +41,18 @@ export const HomeDashboard: React.FC = () => {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, []);
+
+  // Lock scroll when reading article
+  React.useEffect(() => {
+    if (readingArticle) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [readingArticle]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,26 +199,29 @@ export const HomeDashboard: React.FC = () => {
                   )}
                 </div>
 
-                <h3 className="font-bold text-slate-100 text-base leading-snug hover:text-indigo-400 cursor-pointer transition-colors" onClick={() => navigate(`/news/${item.id}`)}>
+                <h3 className="font-bold text-slate-100 text-base leading-snug hover:text-indigo-400 cursor-pointer transition-colors" onClick={() => setReadingArticle(item)}>
                   {item.title}
                 </h3>
 
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">
                   {item.summary}
                 </p>
 
                 <div className="pt-2 flex items-center justify-between border-t border-slate-800/60">
                   <button
-                    onClick={() => navigate(`/ai/analysis/${item.id}`)}
+                    onClick={() => setReadingArticle(item)}
                     className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>UPSC AI Analysis</span>
+                    <span>Read Full Analysis</span>
                   </button>
 
-                  <button className="text-slate-400 hover:text-slate-200 text-xs flex items-center gap-1">
+                  <button
+                    onClick={() => navigate(`/ai/research?q=${encodeURIComponent(item.title)}`)}
+                    className="text-slate-400 hover:text-slate-200 text-xs flex items-center gap-1"
+                  >
                     <Bookmark className="w-3.5 h-3.5" />
-                    <span>Save</span>
+                    <span>AI Prep</span>
                   </button>
                 </div>
               </div>
@@ -246,10 +264,10 @@ export const HomeDashboard: React.FC = () => {
             </div>
 
             <button
-              onClick={() => navigate('/upsc/daily-brief')}
+              onClick={() => navigate('/news')}
               className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors flex items-center justify-center gap-2"
             >
-              <span>Read Full Daily Brief</span>
+              <span>View All Live News</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -262,18 +280,18 @@ export const HomeDashboard: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-300">
-              Generate 10 instant Prelims MCQs or Mains Answer structures from today's headlines.
+              Generate instant Prelims MCQs or Mains Answer structures from today's headlines.
             </p>
 
             <div className="grid grid-cols-2 gap-2">
               <button
-                onClick={() => navigate('/upsc/prelims')}
+                onClick={() => navigate('/ai/research?q=Generate%205%20Prelims%20MCQs%20from%20today%27s%20news')}
                 className="py-2 px-3 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-xs font-semibold text-center transition-colors"
               >
                 Prelims Quiz
               </button>
               <button
-                onClick={() => navigate('/upsc/mains')}
+                onClick={() => navigate('/ai/research?q=Give%20me%20today%27s%20Mains%20question%20and%20model%20answer')}
                 className="py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold text-center transition-colors"
               >
                 Mains Answers
@@ -282,6 +300,120 @@ export const HomeDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ─── FULL ARTICLE READER MODAL ───────────────────────── */}
+      {readingArticle && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="fixed inset-0 -z-10" onClick={() => setReadingArticle(null)} />
+
+          <div
+            style={{ backgroundColor: '#0b0f19' }}
+            className="w-full max-w-3xl max-h-[90vh] rounded-3xl border border-indigo-500/40 shadow-2xl shadow-black ring-1 ring-white/10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header Bar */}
+            <div className="px-6 py-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/90 shrink-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-0.5 rounded-full text-xs font-extrabold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                  {readingArticle.gsPaper}
+                </span>
+                <span className="text-xs text-slate-400 font-medium">
+                  {readingArticle.source} • {readingArticle.date}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate(`/ai/research?q=${encodeURIComponent(readingArticle.title)}`)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Research</span>
+                </button>
+                <button
+                  onClick={() => setReadingArticle(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 transition-colors"
+                  title="Close Reader"
+                >
+                  <span className="text-base font-bold leading-none">&times;</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-slate-200 flex-1">
+              <div>
+                <h1 className="text-xl md:text-2xl font-black text-white leading-tight">
+                  {readingArticle.title}
+                </h1>
+                {readingArticle.syllabusTheme && (
+                  <div className="mt-3 p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/20 text-xs text-indigo-200 flex items-start gap-2">
+                    <BookOpen className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-indigo-300">Syllabus Mapping:</span>{' '}
+                      {readingArticle.syllabusTheme}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 text-sm leading-relaxed text-slate-300 font-normal">
+                {readingArticle.fullArticle.split('\n\n').map((paragraph, idx) => (
+                  <p key={idx} className="text-slate-300 leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+
+              {readingArticle.prelimsPoints && readingArticle.prelimsPoints.length > 0 && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-emerald-950/30 to-slate-900 border border-emerald-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-extrabold uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Prelims Key Facts & Pointers</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    {readingArticle.prelimsPoints.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 mt-1.5" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {readingArticle.mainsPoints && readingArticle.mainsPoints.length > 0 && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-950/30 to-slate-900 border border-indigo-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-indigo-400 text-xs font-extrabold uppercase tracking-wider">
+                    <Building2 className="w-4 h-4" />
+                    <span>Mains Analytical Dimensions & Perspectives</span>
+                  </div>
+                  <ul className="space-y-2.5 text-xs text-slate-300">
+                    {readingArticle.mainsPoints.map((point, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 mt-1.5" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {readingArticle.mainsQuestion && (
+                <div className="rounded-2xl p-5 bg-gradient-to-br from-purple-950/30 to-slate-900 border border-purple-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-purple-400 text-xs font-extrabold uppercase tracking-wider">
+                    <FileText className="w-4 h-4" />
+                    <span>UPSC Model Mains Question for Practice</span>
+                  </div>
+                  <p className="text-xs font-semibold text-purple-200 italic leading-relaxed">
+                    "{readingArticle.mainsQuestion}"
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
