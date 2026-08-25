@@ -36,6 +36,7 @@ export const Sidebar: React.FC = () => {
     { label: 'AI Assistant', path: '/ai/research', icon: Sparkles, highlight: true },
     { label: 'My Documents', path: '/documents', icon: FileText },
     { label: 'Saved Material', path: '/saved', icon: Bookmark },
+    { label: 'Report Glitch / Feedback', path: '/feedback', icon: MessageSquarePlus, badge: 'SUPPORT' },
   ];
 
   const categoryItems = [

@@ -13,6 +13,7 @@ import { MyDocuments } from './pages/MyDocuments';
 import { SavedArticles } from './pages/SavedArticles';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { NewsFeed } from './pages/NewsFeed';
+import { FeedbackPage } from './pages/FeedbackPage';
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ export function App() {
             <Route path="/ai/analysis/:id" element={<AiResearch />} />
             <Route path="/documents" element={<MyDocuments />} />
             <Route path="/saved" element={<SavedArticles />} />
+            <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/search" element={<HomeDashboard />} />
 
             {/* Protected Admin Routes */}
