@@ -324,6 +324,45 @@ export const ALL_NEWS_ITEMS: NewsItem[] = [
   }
 ];
 
-export function getAvailableNewsDates(): string[] {
-  return Array.from(new Set(ALL_NEWS_ITEMS.map((item) => item.dateIso))).sort().reverse();
+let dynamicNewsCache: NewsItem[] | null = null;
+
+/**
+ * Loads freshly synthesized live current affairs from /news/live-current-affairs.json,
+ * merged with curated historical entries.
+ */
+export async function fetchLiveCurrentAffairs(): Promise<NewsItem[]> {
+  try {
+    const res = await fetch('/news/live-current-affairs.json?v=' + Date.now());
+    if (res.ok) {
+      const liveItems: NewsItem[] = await res.json();
+      if (Array.isArray(liveItems) && liveItems.length > 0) {
+        dynamicNewsCache = mergeNewsItems(liveItems, ALL_NEWS_ITEMS);
+        return dynamicNewsCache;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not load live current affairs, using built-in archive fallback.', e);
+  }
+  return ALL_NEWS_ITEMS;
 }
+
+export function getAllNews(): NewsItem[] {
+  return dynamicNewsCache || ALL_NEWS_ITEMS;
+}
+
+function mergeNewsItems(live: NewsItem[], fallback: NewsItem[]): NewsItem[] {
+  const map = new Map<string, NewsItem>();
+  for (const item of fallback) {
+    map.set(item.title.toLowerCase().trim(), item);
+  }
+  for (const item of live) {
+    map.set(item.title.toLowerCase().trim(), item);
+  }
+  return Array.from(map.values()).sort((a, b) => b.dateIso.localeCompare(a.dateIso));
+}
+
+export function getAvailableNewsDates(items?: NewsItem[]): string[] {
+  const list = items || getAllNews();
+  return Array.from(new Set(list.map((item) => item.dateIso))).sort().reverse();
+}
+

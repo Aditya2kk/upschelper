@@ -19,12 +19,17 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { ALL_NEWS_ITEMS } from '../services/newsData';
+import { ALL_NEWS_ITEMS, NewsItem, fetchLiveCurrentAffairs, getAllNews } from '../services/newsData';
 
 export const HomeDashboard: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [searchPrompt, setSearchPrompt] = useState('');
+  const [newsList, setNewsList] = useState<NewsItem[]>(getAllNews());
+
+  React.useEffect(() => {
+    fetchLiveCurrentAffairs().then((items) => setNewsList(items));
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +38,7 @@ export const HomeDashboard: React.FC = () => {
     }
   };
 
-  const sampleNews = ALL_NEWS_ITEMS.slice(0, 8);
+  const sampleNews = newsList.slice(0, 8);
 
   return (
     <div className="space-y-8">

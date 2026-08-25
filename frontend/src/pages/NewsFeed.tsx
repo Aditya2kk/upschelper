@@ -5,9 +5,9 @@ import {
   Globe, Shield, Cpu, TrendingUp, Leaf, Building2,
   Landmark, Users, Wheat, Heart, Clock, ChevronDown, BookOpen,
   Calendar, ChevronLeft, ChevronRight, X, RotateCcw, Copy, Check,
-  ArrowRight, FileText, Share2, HelpCircle
+  ArrowRight, FileText, Share2, HelpCircle, RefreshCw
 } from 'lucide-react';
-import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates } from '../services/newsData';
+import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates, fetchLiveCurrentAffairs, getAllNews } from '../services/newsData';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   'POLITY': <Landmark className="w-3.5 h-3.5" />,
@@ -114,8 +114,6 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
-
-      {/* Day labels */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_LABELS.map((d) => (
           <div key={d} className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider py-1">
@@ -216,12 +214,15 @@ export const NewsFeed: React.FC = () => {
   const navigate = useNavigate();
   const { id: urlArticleId } = useParams<{ id?: string }>();
 
-  const availableDatesList = useMemo(() => getAvailableNewsDates(), []);
+  const [newsList, setNewsList] = useState<NewsItem[]>(getAllNews());
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const availableDatesList = useMemo(() => getAvailableNewsDates(newsList), [newsList]);
   const availableDatesSet = useMemo(() => new Set(availableDatesList), [availableDatesList]);
   
-  const defaultDate = availableDatesList.length > 0 ? availableDatesList[0] : '2026-08-24';
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const defaultDate = availableDatesList.length > 0 ? availableDatesList[0] : todayStr;
 
   const [selectedDate, setSelectedDate] = useState<string>(
     availableDatesSet.has(todayStr) ? todayStr : defaultDate
@@ -237,15 +238,33 @@ export const NewsFeed: React.FC = () => {
   // Active reading article modal state
   const [readingArticle, setReadingArticle] = useState<NewsItem | null>(null);
 
+  const handleSyncNews = async () => {
+    setIsSyncing(true);
+    try {
+      const live = await fetchLiveCurrentAffairs();
+      setNewsList(live);
+      const dates = getAvailableNewsDates(live);
+      if (dates.length > 0 && (!selectedDate || !dates.includes(selectedDate))) {
+        setSelectedDate(dates[0]);
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  useEffect(() => {
+    handleSyncNews();
+  }, []);
+
   // If URL has /news/:id, load that article directly
   useEffect(() => {
     if (urlArticleId) {
-      const match = ALL_NEWS_ITEMS.find((item) => item.id === urlArticleId);
+      const match = newsList.find((item) => item.id === urlArticleId);
       if (match) {
         setReadingArticle(match);
       }
     }
-  }, [urlArticleId]);
+  }, [urlArticleId, newsList]);
 
   const handleOpenArticle = (item: NewsItem) => {
     setReadingArticle(item);
@@ -277,7 +296,7 @@ export const NewsFeed: React.FC = () => {
     }
   };
 
-  const filtered = ALL_NEWS_ITEMS.filter((item) => {
+  const filtered = newsList.filter((item) => {
     if (selectedDate !== 'ALL' && item.dateIso !== selectedDate) return false;
     if (selectedGS !== 'ALL' && item.gsPaper !== selectedGS) return false;
     if (selectedCategory !== 'ALL' && item.category !== selectedCategory) return false;
@@ -311,9 +330,19 @@ export const NewsFeed: React.FC = () => {
             Curated daily current affairs tagged by GS Paper (GS-I to GS-IV), syllabus themes, and exam relevance.
           </p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-slate-400">
-          <Clock className="w-4 h-4 text-indigo-400" />
-          <span>Updated Daily · 24 Aug 2026</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSyncNews}
+            disabled={isSyncing}
+            className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Syncing Feeds...' : 'Sync Live Feeds'}</span>
+          </button>
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
+            <Clock className="w-4 h-4 text-indigo-400" />
+            <span>Auto-Updated Daily</span>
+          </div>
         </div>
       </div>
 
