@@ -103,7 +103,7 @@ export const TopNav: React.FC = () => {
   };
 
   return (
-    <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-30 px-6 flex items-center justify-between gap-4">
+    <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between gap-4">
       {/* Global Search Bar */}
       <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl relative">
         <div className="relative flex items-center">
@@ -153,10 +153,10 @@ export const TopNav: React.FC = () => {
           {/* Notifications Dropdown Panel */}
           {isNotifOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)} />
+              <div className="fixed inset-0 z-[9998]" onClick={() => setIsNotifOpen(false)} />
               <div
                 style={{ backgroundColor: '#0f172a' }}
-                className="absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl border border-slate-800 shadow-2xl shadow-black ring-1 ring-white/10 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+                className="absolute right-0 mt-3 w-80 sm:w-96 rounded-2xl border border-slate-800 shadow-2xl shadow-black ring-1 ring-white/10 z-[9999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
@@ -252,10 +252,10 @@ export const TopNav: React.FC = () => {
 
           {isProfileOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+              <div className="fixed inset-0 z-[9998]" onClick={() => setIsProfileOpen(false)} />
               <div
                 style={{ backgroundColor: '#0f172a' }}
-                className="absolute right-0 mt-2 w-56 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-white/10"
+                className="absolute right-0 mt-2 w-56 border border-slate-800 rounded-xl shadow-2xl py-2 z-[9999] animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-white/10"
               >
                 <div className="px-4 py-2.5 border-b border-slate-800/80">
                   <p className="text-sm font-semibold text-slate-200">{user?.name}</p>

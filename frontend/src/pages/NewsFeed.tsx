@@ -431,7 +431,7 @@ export const NewsFeed: React.FC = () => {
       )}
 
       {/* ─── Date Navigator Bar ───────────────────────────── */}
-      <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-30">
+      <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-10">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Left: Prev/Next Day + Current Date Display */}
           <div className="flex items-center gap-2">
