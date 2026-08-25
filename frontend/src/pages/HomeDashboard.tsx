@@ -19,7 +19,8 @@ import {
   BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { ALL_NEWS_ITEMS, NewsItem, fetchLiveCurrentAffairs, getAllNews } from '../services/newsData';
+import { ALL_NEWS_ITEMS, NewsItem, getAllNews } from '../services/newsData';
+import { fetchRealtimeBreakingNews } from '../services/realtimeNewsService';
 
 export const HomeDashboard: React.FC = () => {
   const { user } = useAuthStore();
@@ -28,7 +29,14 @@ export const HomeDashboard: React.FC = () => {
   const [newsList, setNewsList] = useState<NewsItem[]>(getAllNews());
 
   React.useEffect(() => {
-    fetchLiveCurrentAffairs().then((items) => setNewsList(items));
+    fetchRealtimeBreakingNews().then((items) => setNewsList(items));
+    
+    // Auto-refresh when tab gains focus
+    const onFocus = () => {
+      fetchRealtimeBreakingNews(true).then((items) => setNewsList(items));
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

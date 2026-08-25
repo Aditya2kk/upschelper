@@ -5,9 +5,10 @@ import {
   Globe, Shield, Cpu, TrendingUp, Leaf, Building2,
   Landmark, Users, Wheat, Heart, Clock, ChevronDown, BookOpen,
   Calendar, ChevronLeft, ChevronRight, X, RotateCcw, Copy, Check,
-  ArrowRight, FileText, Share2, HelpCircle, RefreshCw
+  ArrowRight, FileText, Share2, HelpCircle, RefreshCw, Radio, Zap
 } from 'lucide-react';
-import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates, fetchLiveCurrentAffairs, getAllNews } from '../services/newsData';
+import { ALL_NEWS_ITEMS, NewsItem, getAvailableNewsDates } from '../services/newsData';
+import { fetchRealtimeBreakingNews, formatTimeAgo } from '../services/realtimeNewsService';
 
 const categoryIcons: Record<string, React.ReactNode> = {
   'POLITY': <Landmark className="w-3.5 h-3.5" />,
@@ -114,6 +115,8 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Day labels */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {DAY_LABELS.map((d) => (
           <div key={d} className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider py-1">
@@ -214,8 +217,9 @@ export const NewsFeed: React.FC = () => {
   const navigate = useNavigate();
   const { id: urlArticleId } = useParams<{ id?: string }>();
 
-  const [newsList, setNewsList] = useState<NewsItem[]>(getAllNews());
+  const [newsList, setNewsList] = useState<NewsItem[]>(ALL_NEWS_ITEMS);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
 
   const availableDatesList = useMemo(() => getAvailableNewsDates(newsList), [newsList]);
   const availableDatesSet = useMemo(() => new Set(availableDatesList), [availableDatesList]);
@@ -238,11 +242,12 @@ export const NewsFeed: React.FC = () => {
   // Active reading article modal state
   const [readingArticle, setReadingArticle] = useState<NewsItem | null>(null);
 
-  const handleSyncNews = async () => {
+  const handleSyncNews = async (force = true) => {
     setIsSyncing(true);
     try {
-      const live = await fetchLiveCurrentAffairs();
+      const live = await fetchRealtimeBreakingNews(force);
       setNewsList(live);
+      setLastSyncTime(new Date());
       const dates = getAvailableNewsDates(live);
       if (dates.length > 0 && (!selectedDate || !dates.includes(selectedDate))) {
         setSelectedDate(dates[0]);
@@ -252,8 +257,23 @@ export const NewsFeed: React.FC = () => {
     }
   };
 
+  // Auto-sync on mount, on tab focus, and every 60s
   useEffect(() => {
-    handleSyncNews();
+    handleSyncNews(true);
+
+    const onFocus = () => {
+      handleSyncNews(false);
+    };
+    window.addEventListener('focus', onFocus);
+
+    const interval = setInterval(() => {
+      handleSyncNews(false);
+    }, 60000);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearInterval(interval);
+    };
   }, []);
 
   // If URL has /news/:id, load that article directly
@@ -314,37 +334,72 @@ export const NewsFeed: React.FC = () => {
 
   const visible = filtered.slice(0, visibleCount);
 
+  // Top 4 breaking stories for live marquee
+  const breakingNewsItems = useMemo(() => {
+    return newsList.filter(n => n.importance === 'HIGH' || n.id.startsWith('realtime-')).slice(0, 5);
+  }, [newsList]);
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Page Header with Real-Time Pulse */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold mb-2">
-            <Flame className="w-3.5 h-3.5" />
-            <span>Daily UPSC Current Affairs & Editorial Analysis</span>
+            <Flame className="w-3.5 h-3.5 animate-pulse text-rose-400" />
+            <span>24/7 Live Real-Time UPSC Intelligence Wire</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-            Today's News & Analysis
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span>Live Breaking News & Current Affairs</span>
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Curated daily current affairs tagged by GS Paper (GS-I to GS-IV), syllabus themes, and exam relevance.
+            Real-time multi-source wire from The Hindu, Indian Express, and PIB with automated GS-I to GS-IV syllabus breakdown.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Live Pulse Indicator */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span className="hidden sm:inline">LIVE WIRE</span>
+            <span className="text-emerald-500/70 text-[11px]">· {lastSyncTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+
           <button
-            onClick={handleSyncNews}
+            onClick={() => handleSyncNews(true)}
             disabled={isSyncing}
-            className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 text-xs font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
+            className="px-3.5 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-            <span>{isSyncing ? 'Syncing Feeds...' : 'Sync Live Feeds'}</span>
+            <span>{isSyncing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400">
-            <Clock className="w-4 h-4 text-indigo-400" />
-            <span>Auto-Updated Daily</span>
-          </div>
         </div>
       </div>
+
+      {/* ─── Real-Time Breaking News Ticker ──────────────── */}
+      {breakingNewsItems.length > 0 && (
+        <div className="rounded-2xl bg-gradient-to-r from-rose-950/40 via-indigo-950/40 to-slate-900 border border-rose-500/20 p-3.5 flex items-center gap-3 shadow-lg">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-extrabold uppercase tracking-wider shrink-0 shadow-sm">
+            <Zap className="w-3.5 h-3.5 fill-white" />
+            <span>Breaking</span>
+          </div>
+          <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-6 text-xs text-slate-200">
+            {breakingNewsItems.map((item, idx) => (
+              <button
+                key={item.id || idx}
+                onClick={() => handleOpenArticle(item)}
+                className="hover:text-rose-300 text-left shrink-0 max-w-sm md:max-w-md truncate flex items-center gap-2 transition-colors group"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 group-hover:scale-125 transition-transform" />
+                <span className="font-semibold truncate">{item.title}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{item.source}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ─── Date Navigator Bar ───────────────────────────── */}
       <div className="glass-panel p-4 rounded-2xl border border-slate-800 relative z-30">
