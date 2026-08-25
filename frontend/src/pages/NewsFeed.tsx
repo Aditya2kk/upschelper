@@ -715,14 +715,14 @@ export const NewsFeed: React.FC = () => {
 
       {/* ─── FULL ARTICLE READER MODAL ───────────────────────── */}
       {readingArticle && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-6 bg-black/80 backdrop-blur-md">
           {/* Backdrop Click Dismiss */}
-          <div className="fixed inset-0 -z-10" onClick={handleCloseArticle} />
+          <div className="absolute inset-0 bg-transparent cursor-pointer" onClick={handleCloseArticle} />
 
           {/* Reader Panel */}
           <div
             style={{ backgroundColor: '#0b0f19' }}
-            className="w-full max-w-3xl max-h-[90vh] rounded-3xl border border-indigo-500/40 shadow-2xl shadow-black ring-1 ring-white/10 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+            className="relative z-10 w-full max-w-3xl max-h-[90vh] rounded-3xl border border-indigo-500/50 shadow-2xl shadow-black ring-1 ring-white/10 flex flex-col overflow-hidden bg-slate-950 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header Bar */}
