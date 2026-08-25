@@ -778,91 +778,85 @@ export const NewsFeed: React.FC = () => {
               </div>
 
               {/* Full Article Text Narrative */}
-              <div className="space-y-4 text-sm leading-relaxed text-slate-300 font-normal">
+              <div className="space-y-3 text-sm leading-relaxed text-slate-300 font-normal">
                 {(readingArticle.fullArticle || readingArticle.summary || readingArticle.title)
                   .split('\n\n')
-                  .map((paragraph, idx) => {
-                    const trimmed = paragraph.trim();
-                    if (trimmed.startsWith('### ')) {
-                      return (
-                        <h3 key={idx} className="text-sm md:text-base font-black text-indigo-300 uppercase tracking-wider pt-3 pb-1 border-b border-indigo-500/20 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                          {trimmed.replace('### ', '')}
-                        </h3>
-                      );
-                    }
-                    if (trimmed.startsWith('1. ') || trimmed.startsWith('2. ') || trimmed.startsWith('3. ') || trimmed.startsWith('4. ')) {
-                      const lines = trimmed.split('\n');
-                      return (
-                        <div key={idx} className="space-y-2.5 pl-2 my-2">
-                          {lines.map((line, lIdx) => {
+                  .map((block, blockIdx) => {
+                    const lines = block.split('\n').map((l) => l.trim()).filter(Boolean);
+                    return (
+                      <div key={blockIdx} className="space-y-2">
+                        {lines.map((line, lIdx) => {
+                          if (line.startsWith('### ')) {
+                            return (
+                              <h3
+                                key={lIdx}
+                                className="text-base font-bold text-indigo-300 tracking-wide pt-3 pb-1 border-b border-indigo-500/20 flex items-center gap-2"
+                              >
+                                <span className="w-2 h-2 rounded-full bg-indigo-400 shrink-0" />
+                                <span>{line.replace('### ', '')}</span>
+                              </h3>
+                            );
+                          }
+                          if (/^\d+\.\s+/.test(line)) {
                             const match = line.match(/^(\d+\.\s+)(.*)/);
                             const num = match ? match[1] : '';
                             const content = match ? match[2] : line;
                             const parts = content.split(/(\*\*[^*]+\*\*)/g);
                             return (
-                              <div key={lIdx} className="text-slate-300 leading-relaxed text-sm flex items-start gap-2">
+                              <div key={lIdx} className="pl-3 my-1.5 flex items-start gap-2 text-slate-300 text-sm leading-relaxed">
                                 <span className="text-indigo-400 font-bold shrink-0">{num}</span>
                                 <div>
-                                  {parts.map((part, pIdx) =>
-                                    part.startsWith('**') && part.endsWith('**') ? (
+                                  {parts.map((p, pIdx) =>
+                                    p.startsWith('**') && p.endsWith('**') ? (
                                       <strong key={pIdx} className="font-bold text-white">
-                                        {part.slice(2, -2)}
+                                        {p.slice(2, -2)}
                                       </strong>
                                     ) : (
-                                      part
+                                      p
                                     )
                                   )}
                                 </div>
                               </div>
                             );
-                          })}
-                        </div>
-                      );
-                    }
-                    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                      const lines = trimmed.split('\n');
-                      return (
-                        <ul key={idx} className="space-y-2 pl-2 my-2">
-                          {lines.map((line, lIdx) => {
+                          }
+                          if (line.startsWith('- ') || line.startsWith('* ')) {
                             const raw = line.replace(/^[-*]\s+/, '');
                             const parts = raw.split(/(\*\*[^*]+\*\*)/g);
                             return (
-                              <li key={lIdx} className="text-slate-300 leading-relaxed text-sm flex items-start gap-2">
+                              <div key={lIdx} className="pl-3 my-1.5 flex items-start gap-2 text-slate-300 text-sm leading-relaxed">
                                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 mt-2" />
                                 <div>
-                                  {parts.map((part, pIdx) =>
-                                    part.startsWith('**') && part.endsWith('**') ? (
+                                  {parts.map((p, pIdx) =>
+                                    p.startsWith('**') && p.endsWith('**') ? (
                                       <strong key={pIdx} className="font-bold text-white">
-                                        {part.slice(2, -2)}
+                                        {p.slice(2, -2)}
                                       </strong>
                                     ) : (
-                                      part
+                                      p
                                     )
                                   )}
                                 </div>
-                              </li>
+                              </div>
                             );
-                          })}
-                        </ul>
-                      );
-                    }
-
-                    const parts = trimmed.split(/(\*\*[^*]+\*\*)/g);
-                    return (
-                      <p key={idx} className="text-slate-300 leading-relaxed text-sm">
-                        {parts.map((part, pIdx) =>
-                          part.startsWith('**') && part.endsWith('**') ? (
-                            <strong key={pIdx} className="font-bold text-white">
-                              {part.slice(2, -2)}
-                            </strong>
-                          ) : (
-                            part
-                          )
-                        )}
-                      </p>
-                    );
-                  })}
+                          }
+                          const parts = line.split(/(\*\*[^*]+\*\*)/g);
+                          return (
+                            <p key={lIdx} className="text-slate-300 leading-relaxed text-sm">
+                              {parts.map((p, pIdx) =>
+                                p.startsWith('**') && p.endsWith('**') ? (
+                                <strong key={pIdx} className="font-bold text-white">
+                                  {p.slice(2, -2)}
+                                </strong>
+                              ) : (
+                                p
+                              )
+                            )}
+                          </p>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Prelims Focus Pointers Box */}
