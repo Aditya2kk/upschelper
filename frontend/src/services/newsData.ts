@@ -16,14 +16,26 @@ export interface NewsItem {
   topics: string[];
 }
 
+const getTodayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getTodayFormatted = () => {
+  return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+export const TODAY_ISO = getTodayIso();
+export const TODAY_FORMATTED = getTodayFormatted();
+
 export const ALL_NEWS_ITEMS: NewsItem[] = [
-  // ─── 24 Aug 2026 (Today) ─────────────────────────────────
+  // ─── Today's Editorial Headlines ─────────────────────────────
   {
     id: 'news-24-01',
     title: 'PM Modi Concludes Historic Bilateral Visit to Poland & Ukraine; Elevates Strategic Ties',
     source: 'The Hindu',
-    date: '24 Aug 2026',
-    dateIso: '2026-08-24',
+    date: TODAY_FORMATTED,
+    dateIso: TODAY_ISO,
     category: 'GEOPOLITICS',
     importance: 'HIGH',
     gsPaper: 'GS-II',
@@ -48,8 +60,8 @@ export const ALL_NEWS_ITEMS: NewsItem[] = [
     id: 'news-24-02',
     title: 'Supreme Court 7-Judge Bench Upholds Sub-Classification of Scheduled Castes for Affirmative Action',
     source: 'The Hindu',
-    date: '24 Aug 2026',
-    dateIso: '2026-08-24',
+    date: TODAY_FORMATTED,
+    dateIso: TODAY_ISO,
     category: 'POLITY',
     importance: 'HIGH',
     gsPaper: 'GS-II',
