@@ -1,5 +1,5 @@
 {
-  "lastFetch": "2026-08-26T08:12:10.317Z",
+  "lastFetch": "2026-08-26T08:26:11.816Z",
   "newspapers": [
     {
       "id": "tg-1397",
@@ -17,6 +17,23 @@
       "fetchedAt": "10:17 am",
       "fetchedTimestamp": "2026-08-26T04:47:45.597Z",
       "source": "Official Daily Edition"
+    },
+    {
+      "id": "tg-9307",
+      "telegramMsgId": 9307,
+      "title": "The Hindu",
+      "originalFilename": "th.th_delhi.26_08_2026.pdf",
+      "caption": "Good Morning",
+      "editionDate": "2026-08-26",
+      "displayDate": "Wednesday, 26 August 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-2026-08-26.pdf",
+      "filename": "The-Hindu-2026-08-26.pdf",
+      "fileSize": 17318628,
+      "fileSizeMB": "16.5",
+      "fetchedAt": "01:56 pm",
+      "fetchedTimestamp": "2026-08-26T08:26:10.770Z",
+      "source": "National Daily Edition"
     },
     {
       "id": "tg-1394",
@@ -679,23 +696,6 @@
       "fileSizeMB": "9.6",
       "fetchedAt": "10:50 am",
       "fetchedTimestamp": "2026-08-24T05:20:21.606Z",
-      "source": "Official Daily Edition"
-    },
-    {
-      "id": "tg-1318",
-      "telegramMsgId": 1318,
-      "title": "Indian Express — Delhi Edition",
-      "originalFilename": "INDIAN EXPRESS HD Delhi 28~07~2026.pdf",
-      "caption": "INDIAN EXPRESS HD Delhi 28~07~2026",
-      "editionDate": "2026-07-28",
-      "displayDate": "Tuesday, 28 July 2026",
-      "language": "English",
-      "pdfUrl": "/newspapers/Indian-Express-Delhi-2026-07-28.pdf",
-      "filename": "Indian-Express-Delhi-2026-07-28.pdf",
-      "fileSize": 8380124,
-      "fileSizeMB": "8.0",
-      "fetchedAt": "10:50 am",
-      "fetchedTimestamp": "2026-08-24T05:20:40.975Z",
       "source": "Official Daily Edition"
     },
     {

@@ -62,8 +62,8 @@ const TODAY = getTodayIST();
 
 // ─── Newspaper detection patterns ─────────────────────────
 const NEWSPAPER_PATTERNS = [
-  { regex: /indian\s*express/i, name: 'Indian Express', language: 'English' },
-  { regex: /the\s*hindu/i, name: 'The Hindu', language: 'English' },
+  { regex: /\b(th[\._]|the\s*hindu)\b/i, name: 'The Hindu', language: 'English' },
+  { regex: /\b(ie[\._]|indian\s*express)\b/i, name: 'Indian Express', language: 'English' },
   { regex: /hindustan\s*times/i, name: 'Hindustan Times', language: 'English' },
   { regex: /times\s*of\s*india/i, name: 'Times of India', language: 'English' },
   { regex: /economic\s*times/i, name: 'Economic Times', language: 'English' },
@@ -89,7 +89,8 @@ const NEWSPAPER_PATTERNS = [
 
 // ─── Edition detection ────────────────────────────────────
 const EDITION_PATTERNS = [
-  { regex: /\b(delhi|dl)\b/i, edition: 'Delhi' },
+  { regex: /\b(delhi|dl|del)\b/i, edition: 'Delhi' },
+  { regex: /\b(international|intl)\b/i, edition: 'International' },
   { regex: /\b(mumbai|bom)\b/i, edition: 'Mumbai' },
   { regex: /\b(bangalore|bengaluru|blr)\b/i, edition: 'Bangalore' },
   { regex: /\b(chennai|mas)\b/i, edition: 'Chennai' },
@@ -235,17 +236,7 @@ export async function fetchNewspapers() {
   const channels = getActiveChannels();
 
   console.log(`\n${'═'.repeat(65)}`);
-  console.log(`📰 UPSC NewsHub — Multi-Channel Telegram Ingestion & Deduplicator`);
-  console.log(`${'═'.repeat(65)}`);
-  console.log(`📅 Target Date (IST):   ${TODAY}`);
-  console.log(`📡 Configured Channels:  ${channels.length} channel(s)`);
-  channels.forEach((c, idx) => console.log(`   ${idx + 1}. @${c.username || c.channelId || c.url} (${c.name || 'News Channel'})`));
-  console.log(`💾 Storage Output:       ${OUTPUT_DIR}`);
-  console.log(`📂 Existing PDFs:        ${existingFiles.size}`);
-  console.log(`🛡️  Deduplication:       ACTIVE (Single copy policy across all channels)`);
-  console.log(`${'─'.repeat(65)}\n`);
-
-  console.log(`📡 Connecting to Telegram Client...`);
+  console.log(`📰 UPSC NewsHub — Multi-Channel Telegram Ingestion & Deduplicator`);  console.log(`📡 Connecting to Telegram Client...`);
   const client = new TelegramClient(
     new StringSession(SESSION),
     API_ID,
@@ -256,10 +247,14 @@ export async function fetchNewspapers() {
   await client.connect();
   console.log(`✅ Connected to Telegram successfully.\n`);
 
+  // Fetch dialogs to resolve private invite chats and numeric channel IDs
+  const dialogs = await client.getDialogs({ limit: 50 });
+
   let totalPdfsFound = 0;
   let newDownloaded = 0;
   let alreadyExisting = 0;
   let duplicatesSkipped = 0;
+  let olderSkipped = 0;
   let downloadFailed = 0;
   let todayPdfsFound = 0;
   let todayPdfsDownloaded = 0;
@@ -267,9 +262,43 @@ export async function fetchNewspapers() {
 
   // Iterate over each configured channel
   for (const ch of channels) {
-    const channelTarget = ch.username || ch.channelId || ch.url.replace('https://t.me/', '').replace('@', '').trim();
+    const inviteHash = ch.inviteHash || (ch.url && ch.url.includes('+') ? ch.url.split('+')[1].replace('/', '') : null);
+    
+    // Auto-join private invite links if needed
+    if (inviteHash) {
+      try {
+        await client.invoke(new Api.messages.CheckChatInvite({ hash: inviteHash }));
+      } catch (_) {}
+      try {
+        await client.invoke(new Api.messages.ImportChatInvite({ hash: inviteHash }));
+      } catch (_) {}
+    }
+
+    // Resolve channel target entity (ID, Dialog entity, or public handle)
+    let channelTarget = null;
+    const targetRaw = String(ch.username || ch.channelId || ch.url || '');
+
+    for (const d of dialogs) {
+      const cleanDialogId = String(d.id).replace('-100', '').replace('-', '');
+      const cleanTargetRaw = targetRaw.replace('-100', '').replace('-', '').replace('@', '');
+      if (cleanDialogId === cleanTargetRaw || (d.entity?.username && d.entity.username.toLowerCase() === cleanTargetRaw.toLowerCase())) {
+        channelTarget = d.entity;
+        break;
+      }
+      if (inviteHash && d.title && (d.title.toLowerCase().includes('excellence') || d.title.toLowerCase().includes('hindu'))) {
+        channelTarget = d.entity;
+        break;
+      }
+    }
+
+    if (!channelTarget) {
+      channelTarget = ch.username || ch.channelId || ch.url.replace('https://t.me/', '').replace('@', '').trim();
+    }
+
+    const channelLabel = typeof channelTarget === 'object' ? (channelTarget.title || channelTarget.username || 'Private Channel') : `@${channelTarget}`;
+
     console.log(`\n${'─'.repeat(50)}`);
-    console.log(`🔍 Scanning Channel: @${channelTarget} (${ch.name || 'Feed'})`);
+    console.log(`🔍 Scanning Channel: ${channelLabel} (${ch.name || 'Feed'})`);
     console.log(`${'─'.repeat(50)}`);
 
     try {
@@ -289,7 +318,7 @@ export async function fetchNewspapers() {
             offsetId: offsetId || undefined,
           });
         } catch (fetchErr) {
-          console.log(`⚠️  Could not fetch messages from @${channelTarget}: ${fetchErr.message}`);
+          console.log(`⚠️  Could not fetch messages from ${channelLabel}: ${fetchErr.message}`);
           break;
         }
 
@@ -299,7 +328,7 @@ export async function fetchNewspapers() {
         fetchedTotal += batch.length;
         offsetId = batch[batch.length - 1].id;
 
-        process.stdout.write(`   Fetched ${fetchedTotal} messages from @${channelTarget}...\r`);
+        process.stdout.write(`   Fetched ${fetchedTotal} messages from ${channelLabel}...\r`);
         if (batch.length < limit) break;
       }
 
@@ -345,13 +374,20 @@ export async function fetchNewspapers() {
         const dedupKey = getDeduplicationKey(newspaperName, edition, editionDate);
 
         console.log(`  [PDF FOUND] #${totalPdfsFound}`);
-        console.log(`    Channel:            @${channelTarget}`);
+        console.log(`    Channel:            ${channelLabel}`);
         console.log(`    Filename:           ${originalFilename}`);
         console.log(`    Size:               ${fileSizeMB} MB`);
         console.log(`    Detected newspaper: ${newspaperName}`);
         console.log(`    Detected edition:   ${edition || '(none)'}`);
         console.log(`    Extracted date:     ${editionDate}${isToday ? '  ← TODAY' : ''}`);
         console.log(`    Save as:            ${savedFilename}`);
+
+        // ─── Strict Policy: Only Sync Today & Future Editions ────────
+        if (editionDate < TODAY) {
+          olderSkipped++;
+          console.log(`    Status:             ⏭️  Skipped older edition (${editionDate} < ${TODAY}) [Policy: Today onwards only]\n`);
+          continue;
+        }
 
         // ─── Smart Cross-Channel Deduplication ───────────────
         if (seenEditions.has(dedupKey)) {
