@@ -164,63 +164,20 @@ export const AdminDashboard: React.FC = () => {
     }
   ]);
 
-  const generateMockLogins = (): UserLoginLog[] => {
-    const now = Date.now();
-    const names = [
-      { name: currentAdmin?.name || 'System Administrator', email: currentAdmin?.email || 'admin@upscnewshub.ai', role: 'ADMIN', ip: '103.21.124.52', dev: 'Windows Desktop · Chrome 128' },
-      { name: 'Rahul Sharma', email: 'rahul.ias2026@gmail.com', role: 'ASPIRANT', ip: '49.207.214.18', dev: 'Android 14 · Chrome Mobile' },
-      { name: 'Priya Sundaram', email: 'priya.sundaram@outlook.com', role: 'ASPIRANT', ip: '152.57.34.190', dev: 'iPhone 15 Pro · Mobile Safari' },
-      { name: 'Ananya Verma', email: 'ananya.upsc.prep@gmail.com', role: 'ASPIRANT', ip: '106.51.242.76', dev: 'macOS Sonoma · Safari 17' },
-      { name: 'Vikramaditya Rao', email: 'vikram.rao99@gmail.com', role: 'ASPIRANT', ip: '117.216.48.112', dev: 'Windows 11 · Edge 126' },
-      { name: 'Sneha Kulkarni', email: 'sneha.kulkarni@yahoo.com', role: 'ASPIRANT', ip: '14.139.122.35', dev: 'iPad Air · Safari' },
-      { name: 'Manish Kumar', email: 'manish.kr.upsc@gmail.com', role: 'ASPIRANT', ip: '122.161.49.201', dev: 'Windows 10 · Firefox 128' },
-      { name: 'Divya Nambiar', email: 'divya.nambiar@gmail.com', role: 'ASPIRANT', ip: '27.59.182.94', dev: 'Android 13 · Chrome Mobile' },
-      { name: 'Adarsh Tripathi', email: 'adarsh.tripathi@gmail.com', role: 'ASPIRANT', ip: '182.73.190.41', dev: 'Windows 11 · Chrome 128' },
-      { name: 'Kavita Chawla', email: 'kavita.chawla@gmail.com', role: 'ASPIRANT', ip: '115.240.160.85', dev: 'macOS Ventura · Chrome 127' },
-      { name: 'Arjun Deshmukh', email: 'arjun.deshmukh@gmail.com', role: 'ASPIRANT', ip: '103.48.196.22', dev: 'Android 14 · Samsung Browser' },
-      { name: 'Shreya Sengupta', email: 'shreya.sengupta@gmail.com', role: 'ASPIRANT', ip: '43.242.118.59', dev: 'iPhone 14 · Safari' },
-      { name: 'Rohan Mehra', email: 'rohan.mehra@gmail.com', role: 'ASPIRANT', ip: '157.48.192.10', dev: 'Windows 11 · Chrome 128' },
-      { name: 'Deepak Patel', email: 'deepak.patel98@gmail.com', role: 'ASPIRANT', ip: '106.215.88.143', dev: 'Android 14 · Chrome Mobile' },
-      { name: 'Nandini Joshi', email: 'nandini.joshi@gmail.com', role: 'ASPIRANT', ip: '120.59.144.67', dev: 'macOS Sonoma · Brave' },
-      { name: 'Karthik Raja', email: 'karthik.raja.ias@gmail.com', role: 'ASPIRANT', ip: '183.82.112.98', dev: 'Windows 11 · Chrome 128' },
-      { name: 'Megha Agarwal', email: 'megha.agarwal@gmail.com', role: 'ASPIRANT', ip: '49.36.172.54', dev: 'iPhone 13 · Mobile Safari' },
-      { name: 'Tanya Roy', email: 'tanya.roy.upsc@gmail.com', role: 'ASPIRANT', ip: '14.143.190.23', dev: 'Windows 10 · Chrome 127' },
-      { name: 'Siddharth Bose', email: 'siddharth.bose@gmail.com', role: 'ASPIRANT', ip: '117.194.220.81', dev: 'Linux Ubuntu · Firefox' },
-      { name: 'Gaurav Yadav', email: 'gaurav.yadav.ias@gmail.com', role: 'ASPIRANT', ip: '103.88.234.19', dev: 'Android 14 · Chrome Mobile' },
-    ];
-
-    return names.map((item, idx) => {
-      // Stagger timestamps from 2 minutes ago to 24 hours ago
-      const offsetMs = (idx === 0) ? 2 * 60 * 1000 : (idx * 38 * 60 * 1000) + Math.floor(Math.random() * 60000);
-      return {
-        id: `login-${idx + 1}`,
-        userName: item.name,
-        userEmail: item.email,
-        userRole: item.role,
-        ipAddress: item.ip,
-        deviceType: item.dev,
-        userAgent: item.dev,
-        status: 'SUCCESS',
-        loginTimestamp: new Date(now - offsetMs).toISOString(),
-      };
-    });
-  };
-
   const fetchLoginHistory = async () => {
     setIsLoadingLogins(true);
     try {
       const res = await api.get('/admin/login-history');
-      if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length >= 5) {
+      if (res.data?.success && Array.isArray(res.data.data)) {
         setLoginHistory(res.data.data.slice(0, 20));
-        return;
+      } else {
+        setLoginHistory([]);
       }
     } catch {
-      // Graceful fallback
+      setLoginHistory([]);
+    } finally {
+      setIsLoadingLogins(false);
     }
-
-    // Populate full 20-record audit feed
-    setLoginHistory(generateMockLogins());
-    setIsLoadingLogins(false);
   };
 
   const fetchUsers = async () => {
@@ -808,8 +765,12 @@ export const AdminDashboard: React.FC = () => {
 
                     {filteredLogins.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="text-center py-12 text-slate-500">
-                          No login audit logs matching the current filter.
+                        <td colSpan={7} className="text-center py-12 space-y-2">
+                          <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
+                          <p className="text-sm font-bold text-slate-300">Confidential Telemetry Stream Active</p>
+                          <p className="text-xs text-slate-500 max-w-md mx-auto">
+                            User login events and IP telemetry are strictly confidential and accessible solely to you as System Administrator. Authentication sessions appear here live as users log in.
+                          </p>
                         </td>
                       </tr>
                     )}
