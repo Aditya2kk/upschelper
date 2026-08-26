@@ -1,28 +1,30 @@
 @echo off
-title Setup UPSC Daily Newspaper Auto-Sync Task
+title Setup UPSC Continuous Newspaper Auto-Sync
 echo ============================================================
-echo  Setting up Windows Scheduled Task for UPSC Newspaper Sync
+echo  Setting up Continuous Background Newspaper Sync (Every 20m)
 echo ============================================================
 echo.
 
 set TASK_NAME=UPSCNewsHubSync
-set SCRIPT_PATH=%~dp0sync-newspapers.bat
+set SCRIPT_PATH=%~dp0run-sync-silent.vbs
 
 echo Task Name: %TASK_NAME%
-echo Script:    %SCRIPT_PATH%
+echo Runner:    wscript.exe "%SCRIPT_PATH%"
+echo Frequency: Every 20 minutes (Continuous, Silent)
 echo.
 
 :: Delete existing task if present
 schtasks /delete /tn "%TASK_NAME%" /f >nul 2>&1
 
-:: Create scheduled task to run daily at 06:30 AM
-schtasks /create /tn "%TASK_NAME%" /tr "\"%SCRIPT_PATH%\"" /sc daily /st 06:30 /f
+:: Create scheduled task to run every 20 minutes silently in the background
+schtasks /create /tn "%TASK_NAME%" /tr "wscript.exe \"%SCRIPT_PATH%\"" /sc minute /mo 20 /f
 
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ============================================================
-    echo [SUCCESS] Windows Task "%TASK_NAME%" created successfully!
-    echo It will run automatically every morning at 6:30 AM IST.
+    echo [SUCCESS] Continuous Auto-Sync Task registered!
+    echo It will check Telegram every 20 minutes silently all day.
+    echo As soon as any edition is uploaded, it auto-pushes to Vercel!
     echo ============================================================
 ) else (
     echo.
