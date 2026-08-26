@@ -36,8 +36,8 @@ async function runFetchAndPush() {
 async function main() {
   console.log(`\n📰 UPSC NewsHub — Continuous Telegram Newspaper Daemon`);
   console.log(`${'─'.repeat(60)}`);
-  console.log(`Channel:  @${process.env.TELEGRAM_CHANNEL || 'abvcdsdf'}`);
-  console.log(`Interval: Every ${INTERVAL_MINUTES} minutes (Continuous all day)`);
+  console.log(`Pipelines: Multi-Channel Ingestion & Deduplication Active`);
+  console.log(`Interval:  Every ${INTERVAL_MINUTES} minutes (Continuous all day)`);
   console.log(`${'─'.repeat(60)}\n`);
 
   // Run initial cycle immediately

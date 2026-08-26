@@ -25,9 +25,9 @@ public class TelegramChannelController {
         // If empty, initialize with default channel
         if (list.isEmpty()) {
             TelegramChannelSource defaultCh = new TelegramChannelSource(
-                "The Hindu & Indian Express Daily PDF Feed",
-                "https://t.me/abvcdsdf",
-                "abvcdsdf",
+                "National Daily Newspaper PDF Feed",
+                "https://t.me/national_epapers",
+                "national_epapers",
                 "The Hindu, Indian Express, National Press"
             );
             repository.save(defaultCh);

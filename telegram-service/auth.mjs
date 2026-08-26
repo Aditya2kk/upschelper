@@ -51,7 +51,7 @@ async function main() {
   console.log('\n💡 Add this to your telegram-service/.env file.\n');
 
   // Quick test: try to access the channel
-  const channel = process.env.TELEGRAM_CHANNEL || 'abvcdsdf';
+  const channel = process.env.TELEGRAM_CHANNEL || 'newspaper_channel';
   try {
     const entity = await client.getEntity(channel);
     console.log(`✅ Channel access verified: "${entity.title}" (@${channel})`);

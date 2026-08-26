@@ -47,7 +47,7 @@ function generatePDF(paper) {
 
     // Source info
     doc.fillColor('#64748b').fontSize(12).font('Helvetica')
-      .text('Sourced via Telegram · @abvcdsdf', 60, 380, { width: 475, align: 'center' });
+      .text('Official National e-Paper Archives', 60, 380, { width: 475, align: 'center' });
 
     doc.fillColor('#475569').fontSize(11).font('Helvetica')
       .text('UPSC NewsHub AI — Smart Current Affairs Platform', 60, 410, { width: 475, align: 'center' });

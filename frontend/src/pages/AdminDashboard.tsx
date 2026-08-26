@@ -101,10 +101,10 @@ export const AdminDashboard: React.FC = () => {
   // Multi-Channel Telegram State
   const [telegramChannels, setTelegramChannels] = useState<TelegramChannelItem[]>([
     {
-      id: 'ch-1',
-      name: 'Primary National Daily PDF Channel',
-      channelUrl: 'https://t.me/abvcdsdf',
-      username: 'abvcdsdf',
+      id: 'ch-primary',
+      name: 'National Daily Newspapers & e-Papers',
+      channelUrl: 'https://t.me/national_epapers',
+      username: 'national_epapers',
       active: true,
       pollIntervalMinutes: 20,
       newspaperFocus: 'The Hindu, Indian Express, National Publications',
@@ -155,13 +155,13 @@ export const AdminDashboard: React.FC = () => {
         setUserList([
           {
             id: currentAdmin.id || 'admin-1',
-            name: currentAdmin.name || 'Aditya Raj',
-            email: currentAdmin.email || 'adityarajc1xx@gmail.com',
+            name: currentAdmin.name || 'System Administrator',
+            email: currentAdmin.email || 'admin@upscnewshub.ai',
             role: currentAdmin.role || 'ADMIN',
             avatarUrl: currentAdmin.avatarUrl,
             lastLoginAt: new Date().toISOString(),
-            lastLoginIp: '103.21.124.52 (Active Session)',
-            userAgent: navigator.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128',
+            lastLoginIp: '127.0.0.1 (Active Session)',
+            userAgent: navigator.userAgent || 'Desktop Browser',
             createdAt: '2026-08-23T10:00:00Z'
           }
         ]);
@@ -186,8 +186,8 @@ export const AdminDashboard: React.FC = () => {
           severity: 'HIGH',
           title: 'Notification dropdown was cut off on date bar',
           description: 'When clicking bell icon on news page, date bar was rendering above the notification menu.',
-          userName: 'Aditya Raj',
-          userEmail: 'adityarajc1xx@gmail.com',
+          userName: 'Verified Aspirant',
+          userEmail: 'aspirant@upscnewshub.ai',
           browserInfo: 'Mozilla/5.0 Windows NT 10.0 Chrome/128',
           pageUrl: 'https://upsc-newshub-six.vercel.app/news',
           status: 'RESOLVED',
@@ -199,9 +199,9 @@ export const AdminDashboard: React.FC = () => {
           severity: 'MEDIUM',
           title: 'Add Hindi Newspaper Editions for UPSC CSE',
           description: 'Would love to have Dainik Jagran National Edition PDF alongside The Hindu & Indian Express.',
-          userName: 'Rahul Sharma',
-          userEmail: 'rahul.aspirant@gmail.com',
-          browserInfo: 'Mobile Safari / iPhone 15',
+          userName: 'Aspirant Student',
+          userEmail: 'student@upscnewshub.ai',
+          browserInfo: 'Mobile Safari / iOS Client',
           pageUrl: 'https://upsc-newshub-six.vercel.app/newspapers',
           status: 'OPEN',
           createdAt: new Date(Date.now() - 7200000).toISOString(),
@@ -388,7 +388,7 @@ export const AdminDashboard: React.FC = () => {
               RESTRICTED ACCESS · SYSTEM ADMINISTRATOR CONSOLE
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-slate-900 border border-slate-800 text-slate-400">
-              Session: {currentAdmin?.email || 'adityarajc1xx@gmail.com'}
+              Session: {currentAdmin?.email || 'admin@upscnewshub.ai'}
             </span>
           </div>
 

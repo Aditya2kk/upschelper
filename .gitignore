@@ -75,3 +75,8 @@ coverage/
 htmlcov/
 .coverage
 .nyc_output/
+
+# Private Channel Configuration (CRITICAL - NEVER COMMIT TELEGRAM SOURCES)
+telegram-service/channels.json
+frontend/public/newspapers/channels.json
+scripts/sync-log.txt

@@ -44,8 +44,8 @@ export function getActiveChannels() {
     {
       id: 'default',
       name: 'Official National e-Paper Channel',
-      username: process.env.TELEGRAM_CHANNEL || 'abvcdsdf',
-      url: `https://t.me/${process.env.TELEGRAM_CHANNEL || 'abvcdsdf'}`,
+      username: process.env.TELEGRAM_CHANNEL || 'newspaper_channel',
+      url: `https://t.me/${process.env.TELEGRAM_CHANNEL || 'newspaper_channel'}`,
       active: true,
     }
   ];
