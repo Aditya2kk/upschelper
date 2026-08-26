@@ -32,6 +32,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserLoginAuditRepository userLoginAuditRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
@@ -50,11 +51,13 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository,
+                       UserLoginAuditRepository userLoginAuditRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
                        JwtTokenProvider tokenProvider) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.userLoginAuditRepository = userLoginAuditRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
@@ -150,6 +153,21 @@ public class AuthService {
             user.setUserAgent(userAgent.length() > 490 ? userAgent.substring(0, 490) : userAgent);
         }
         user = userRepository.save(user);
+
+        // Record login audit event
+        try {
+            UserLoginAudit audit = new UserLoginAudit(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                clientIp,
+                userAgent
+            );
+            userLoginAuditRepository.save(audit);
+        } catch (Exception e) {
+            log.warn("Could not save login audit log: {}", e.getMessage());
+        }
 
         String accessToken = tokenProvider.generateToken(authentication);
 

@@ -3,6 +3,8 @@ package com.upscnewshub.controller;
 import com.upscnewshub.dto.ApiResponse;
 import com.upscnewshub.dto.UserDto;
 import com.upscnewshub.entity.User;
+import com.upscnewshub.entity.UserLoginAudit;
+import com.upscnewshub.repository.UserLoginAuditRepository;
 import com.upscnewshub.repository.UserRepository;
 import com.upscnewshub.security.CustomUserDetails;
 import org.springframework.http.HttpStatus;
@@ -21,9 +23,11 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final UserRepository userRepository;
+    private final UserLoginAuditRepository userLoginAuditRepository;
 
-    public AdminController(UserRepository userRepository) {
+    public AdminController(UserRepository userRepository, UserLoginAuditRepository userLoginAuditRepository) {
         this.userRepository = userRepository;
+        this.userLoginAuditRepository = userLoginAuditRepository;
     }
 
     @GetMapping("/users")
@@ -57,5 +61,17 @@ public class AdminController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", users));
+    }
+
+    @GetMapping("/login-history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserLoginAudit>>> getLoginHistory(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null || !"ADMIN".equalsIgnoreCase(userDetails.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access denied. Only Administrators can view login audit history.", "FORBIDDEN", "/api/admin/login-history"));
+        }
+
+        List<UserLoginAudit> history = userLoginAuditRepository.findTop20ByOrderByLoginTimestampDesc();
+        return ResponseEntity.ok(ApiResponse.success("Last 20 user login audit records retrieved successfully", history));
     }
 }
