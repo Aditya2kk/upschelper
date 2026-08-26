@@ -68,4 +68,9 @@ public class AuthController {
         UserDto userDto = authService.getCurrentUser(userDetails.getId());
         return ResponseEntity.ok(ApiResponse.success(userDto));
     }
+
+    @GetMapping("/health")
+    public ResponseEntity<ApiResponse<String>> health() {
+        return ResponseEntity.ok(ApiResponse.success("Server is online and warm", "UP"));
+    }
 }

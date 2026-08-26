@@ -17,10 +17,15 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 async function main() {
   console.log(`\n${'═'.repeat(60)}`);
   console.log(`📰 UPSC NewsHub — Daily Newspaper Sync & Push`);
-  console.log(`Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`);
-  console.log(`${'═'.repeat(60)}\n`);
-
   try {
+    // Step 0: Keep-Alive Ping for Render Backend
+    try {
+      const https = await import('https');
+      https.get('https://upsc-newshub-backend.onrender.com/api/auth/health', (res) => {
+        console.log(`⚡ Render Backend Keep-Alive: HTTP ${res.statusCode} (Instance Warm)`);
+      }).on('error', () => {});
+    } catch (_) {}
+
     // Step 1: Run fetch script
     console.log('📡 Step 1/3: Fetching latest newspaper PDFs from Telegram...');
     const { fetchNewspapers } = await import('./fetch-newspapers.mjs');

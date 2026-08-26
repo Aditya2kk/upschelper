@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Bot, Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff, GraduationCap, Shield } from 'lucide-react';
+import { Bot, Mail, Lock, ArrowRight, ShieldCheck, Eye, EyeOff, GraduationCap, Shield, Server, Sparkles, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -13,7 +13,30 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
   const [selectedRoleTab, setSelectedRoleTab] = useState<'ASPIRANT' | 'ADMIN'>('ASPIRANT');
+  const timerRef = useRef<any>(null);
+
+  // Pre-warm backend immediately when user arrives on login page
+  useEffect(() => {
+    api.get('/auth/health').catch(() => {});
+  }, []);
+
+  // Timer to detect Render cold-start and provide crystal-clear user guidance
+  useEffect(() => {
+    if (isLoading) {
+      setLoadingSeconds(0);
+      timerRef.current = setInterval(() => {
+        setLoadingSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setLoadingSeconds(0);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,17 +191,45 @@ export const Login: React.FC = () => {
               </div>
             </div>
 
+            {isLoading && loadingSeconds >= 2 && (
+              <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-indigo-200 space-y-1.5 animate-in fade-in">
+                <div className="flex items-center gap-2 font-semibold">
+                  <Server className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                  <span>
+                    {loadingSeconds < 6
+                      ? 'Connecting to secure cloud server...'
+                      : loadingSeconds < 15
+                      ? 'Waking up cloud server instance... (Render free tier boot)'
+                      : 'Finalizing database authentication... almost ready!'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
+                  <div
+                    className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min(95, loadingSeconds * 6)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-50 ${
+              className={`w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white shadow-lg transition-all disabled:opacity-75 ${
                 selectedRoleTab === 'ADMIN'
                   ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 shadow-amber-500/25'
                   : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-indigo-500/25'
               }`}
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>
+                    {loadingSeconds < 3
+                      ? 'Signing in...'
+                      : `Connecting to Cloud (${loadingSeconds}s)...`}
+                  </span>
+                </div>
               ) : (
                 <>
                   <span>{selectedRoleTab === 'ADMIN' ? 'Sign in to Admin Console' : 'Sign in as Aspirant'}</span>
