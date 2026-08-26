@@ -83,6 +83,7 @@ async function main() {
 
     console.log(`\n🎉 SUCCESS! Today's newspapers (${todayStr}) pushed to GitHub.`);
     console.log('⚡ Vercel will deploy the updated library in ~30 seconds.');
+    process.exit(0);
   } catch (err) {
     console.error(`\n❌ Error during sync and push: ${err.message}`);
     process.exit(1);
