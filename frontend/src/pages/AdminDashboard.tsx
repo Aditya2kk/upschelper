@@ -72,14 +72,14 @@ export const AdminDashboard: React.FC = () => {
   const [sources, setSources] = useState([
     {
       id: 'src-1',
-      name: 'The Hindu Official Daily PDF (Telegram Channel)',
-      type: 'TELEGRAM',
+      name: 'The Hindu & Indian Express Daily PDF Ingestion',
+      type: 'TELEGRAM_PIPELINE',
       channelUrl: 'https://t.me/abvcdsdf',
       channelId: '@abvcdsdf',
       authorizedDistribution: true,
       active: true,
-      pollInterval: 30,
-      lastFetched: '10 mins ago',
+      pollInterval: 20,
+      lastFetched: 'Active (Every 20m background sync)',
     },
     {
       id: 'src-2',

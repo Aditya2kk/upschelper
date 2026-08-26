@@ -471,7 +471,7 @@ function buildEntry(msg, newspaperName, originalFilename, caption, editionDate, 
     fileSizeMB: String(fileSizeMB),
     fetchedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
     fetchedTimestamp: new Date().toISOString(),
-    source: `Telegram · @${CHANNEL}`,
+    source: 'National Daily Edition',
   };
 }
 
