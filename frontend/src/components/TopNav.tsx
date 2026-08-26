@@ -107,17 +107,17 @@ export const TopNav: React.FC = () => {
 
   return (
     <>
-      <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50 px-6 flex items-center justify-between gap-4">
+      <header className="h-16 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50 px-3 sm:px-6 flex items-center justify-between gap-3 sm:gap-4">
       {/* Global Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl relative">
+      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-xl relative min-w-0">
         <div className="relative flex items-center">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none shrink-0" />
           <input
             type="text"
-            placeholder="Search news, topics, PDFs, UPSC GS concepts..."
+            placeholder="Search news, topics, PDFs..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-12 py-2 rounded-xl text-sm bg-slate-950/60 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+            className="w-full pl-9 pr-8 sm:pr-12 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm bg-slate-950/60 border border-slate-800 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/50 transition-all"
           />
           <kbd className="absolute right-3 hidden sm:flex items-center gap-0.5 text-[10px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 pointer-events-none">
             <Command className="w-2.5 h-2.5" /> K
@@ -126,7 +126,7 @@ export const TopNav: React.FC = () => {
       </form>
 
       {/* Action Right Menu */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Ask AI Quick Pill */}
         <button
           onClick={() => navigate('/ai/research')}
@@ -157,12 +157,12 @@ export const TopNav: React.FC = () => {
             createPortal(
               <>
                 <div
-                  className="fixed inset-0 z-[999980] bg-black/20 backdrop-blur-[1px]"
+                  className="fixed inset-0 z-[999980] bg-black/40 backdrop-blur-[1px]"
                   onClick={() => setIsNotifOpen(false)}
                 />
                 <div
                   style={{ backgroundColor: '#0f172a' }}
-                  className="fixed top-16 right-4 md:right-8 w-80 sm:w-96 rounded-2xl border border-slate-800 shadow-2xl shadow-black ring-1 ring-white/10 z-[999999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+                  className="fixed top-16 right-3 sm:right-6 w-[calc(100vw-1.5rem)] sm:w-96 max-w-sm rounded-2xl border border-slate-800 shadow-2xl shadow-black ring-1 ring-white/10 z-[999999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Header */}
@@ -266,7 +266,7 @@ export const TopNav: React.FC = () => {
                 />
                 <div
                   style={{ backgroundColor: '#0f172a' }}
-                  className="fixed top-16 right-4 md:right-8 w-56 border border-slate-800 rounded-xl shadow-2xl py-2 z-[999999] animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-white/10"
+                  className="fixed top-16 right-3 sm:right-6 w-56 max-w-[calc(100vw-2rem)] border border-slate-800 rounded-xl shadow-2xl py-2 z-[999999] animate-in fade-in slide-in-from-top-2 duration-150 ring-1 ring-white/10"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="px-4 py-2.5 border-b border-slate-800/80">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Newspaper, Calendar, Download, Eye, Sparkles, Filter,
   FileText, Send, Clock, RefreshCw, Settings,
@@ -75,7 +76,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({ selectedDate, onSelect,
   return (
     <div
       style={{ backgroundColor: '#0f172a' }}
-      className="border border-indigo-500/40 rounded-3xl p-6 w-[360px] max-w-full shadow-2xl shadow-black ring-1 ring-white/10 relative z-[100]"
+      className="border border-indigo-500/40 rounded-3xl p-4 sm:p-6 w-full max-w-sm shadow-2xl shadow-black ring-1 ring-white/10 relative z-50"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
@@ -388,11 +389,11 @@ export const NewspaperLibrary: React.FC = () => {
               <ChevronLeft className="w-5 h-5" />
             </button>
 
-            <div className="text-center min-w-[200px]">
-              <h2 className="text-base font-bold text-white">
+            <div className="text-center min-w-0 flex-1 sm:min-w-[200px]">
+              <h2 className="text-sm sm:text-base font-bold text-white truncate">
                 {formatDateHeading(selectedDate)}
               </h2>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
                 {filteredPapers.length} newspaper{filteredPapers.length !== 1 ? 's' : ''} available
               </p>
             </div>
@@ -412,7 +413,7 @@ export const NewspaperLibrary: React.FC = () => {
           </div>
 
           {/* Right: Calendar toggle + language filter */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -423,11 +424,11 @@ export const NewspaperLibrary: React.FC = () => {
               <option value="Hindi">Hindi</option>
             </select>
 
-            {/* Calendar button with dropdown directly below */}
+            {/* Calendar button with centered modal */}
             <div className="relative">
               <button
                 onClick={() => setCalendarOpen(!calendarOpen)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all ${
                   calendarOpen
                     ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                     : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
@@ -437,27 +438,28 @@ export const NewspaperLibrary: React.FC = () => {
                 <span>Calendar</span>
               </button>
 
-              {/* Dropdown directly below Calendar button */}
-              {calendarOpen && (
-                <>
-                  {/* Backdrop to handle click outside */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setCalendarOpen(false)}
-                  />
-                  <div className="absolute right-0 top-full mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                    <CalendarPicker
-                      selectedDate={selectedDate}
-                      onSelect={(d) => {
-                        setSelectedDate(d);
-                        setCalendarOpen(false);
-                      }}
-                      availableDates={availableDates}
-                      onClose={() => setCalendarOpen(false)}
+              {/* Centered responsive modal with backdrop */}
+              {calendarOpen &&
+                createPortal(
+                  <div className="fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-4">
+                    <div
+                      className="fixed inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in"
+                      onClick={() => setCalendarOpen(false)}
                     />
-                  </div>
-                </>
-              )}
+                    <div className="relative z-10 w-full max-w-sm animate-in zoom-in-95 duration-150">
+                      <CalendarPicker
+                        selectedDate={selectedDate}
+                        onSelect={(d) => {
+                          setSelectedDate(d);
+                          setCalendarOpen(false);
+                        }}
+                        availableDates={availableDates}
+                        onClose={() => setCalendarOpen(false)}
+                      />
+                    </div>
+                  </div>,
+                  document.body
+                )}
             </div>
 
             {/* Today shortcut */}
