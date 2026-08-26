@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-08-25T05:51:36.995Z",
+  "lastFetch": "2026-08-26T04:47:49.895Z",
   "newspapers": [
+    {
+      "id": "tg-1397",
+      "telegramMsgId": 1397,
+      "title": "Indian Express — Delhi Edition",
+      "originalFilename": "INDIAN EXPRESS HD Delhi 26~08~2026.pdf",
+      "caption": "INDIAN EXPRESS HD Delhi 26~08~2026",
+      "editionDate": "2026-08-26",
+      "displayDate": "Wednesday, 26 August 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/Indian-Express-Delhi-2026-08-26.pdf",
+      "filename": "Indian-Express-Delhi-2026-08-26.pdf",
+      "fileSize": 11211352,
+      "fileSizeMB": "10.7",
+      "fetchedAt": "10:17 am",
+      "fetchedTimestamp": "2026-08-26T04:47:45.597Z",
+      "source": "Telegram · @abvcdsdf"
+    },
     {
       "id": "tg-1394",
       "telegramMsgId": 1394,
@@ -16,6 +33,23 @@
       "fileSizeMB": "7.5",
       "fetchedAt": "11:21 am",
       "fetchedTimestamp": "2026-08-25T05:51:36.880Z",
+      "source": "Telegram · @abvcdsdf"
+    },
+    {
+      "id": "tg-1396",
+      "telegramMsgId": 1396,
+      "title": "Indian Express — HD Edition",
+      "originalFilename": "INDIAN EXPRESS UPSC IAS EDITION HD 25~08~2026.pdf",
+      "caption": "INDIAN EXPRESS UPSC IAS EDITION HD 25~08~2026.",
+      "editionDate": "2026-08-25",
+      "displayDate": "Tuesday, 25 August 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/Indian-Express-HD-2026-08-25.pdf",
+      "filename": "Indian-Express-HD-2026-08-25.pdf",
+      "fileSize": 4033977,
+      "fileSizeMB": "3.8",
+      "fetchedAt": "10:17 am",
+      "fetchedTimestamp": "2026-08-26T04:47:49.773Z",
       "source": "Telegram · @abvcdsdf"
     },
     {
@@ -2944,5 +2978,5 @@
     }
   ],
   "channel": "abvcdsdf",
-  "totalPapers": 173
+  "totalPapers": 175
 }
