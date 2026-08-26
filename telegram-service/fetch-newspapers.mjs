@@ -131,29 +131,29 @@ function detectEdition(caption, filename) {
 function extractDateFromText(text) {
   if (!text) return null;
 
-  // Pattern 1: DD~MM~YYYY, DD-MM-YYYY, DD_MM_YYYY, DD.MM.YYYY
+  // Pattern 1: DD~MM~YYYY, DD-MM-YYYY, DD_MM_YYYY, DD.MM.YYYY, DD MM YYYY
   const dmyMatch = text.match(/(\d{1,2})[~_\-\.\s](\d{1,2})[~_\-\.\s](\d{4})/);
   if (dmyMatch) {
     const day = dmyMatch[1].padStart(2, '0');
     const month = dmyMatch[2].padStart(2, '0');
     const year = dmyMatch[3];
-    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31) {
+    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31 && Number(year) >= 2024 && Number(year) <= 2035) {
       return `${year}-${month}-${day}`;
     }
   }
 
-  // Pattern 2: YYYY-MM-DD
+  // Pattern 2: YYYY-MM-DD, YYYY_MM_DD, YYYY.MM.DD
   const ymdMatch = text.match(/(\d{4})[~_\-\.\s](\d{1,2})[~_\-\.\s](\d{1,2})/);
   if (ymdMatch) {
     const year = ymdMatch[1];
     const month = ymdMatch[2].padStart(2, '0');
     const day = ymdMatch[3].padStart(2, '0');
-    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31) {
+    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31 && Number(year) >= 2024 && Number(year) <= 2035) {
       return `${year}-${month}-${day}`;
     }
   }
 
-  // Pattern 3: Month name with day and year
+  // Pattern 3: Month name with day and year (e.g. 26 Aug 2026, 26-August-2026, Aug 26 2026)
   const monthNames = {
     jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
     jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
@@ -165,7 +165,27 @@ function extractDateFromText(text) {
     const day = namedMatch[1].padStart(2, '0');
     const month = monthNames[namedMatch[2].toLowerCase()];
     const year = namedMatch[3];
-    if (month) return `${year}-${month}-${day}`;
+    if (month && Number(day) >= 1 && Number(day) <= 31) return `${year}-${month}-${day}`;
+  }
+
+  // Pattern 4: Month name first (e.g. August 26, 2026)
+  const namedMatchFirst = text.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[~_\-\.\s]*(\d{1,2})[~_\-\.\s,]+(\d{4})/i);
+  if (namedMatchFirst) {
+    const month = monthNames[namedMatchFirst[1].toLowerCase()];
+    const day = namedMatchFirst[2].padStart(2, '0');
+    const year = namedMatchFirst[3];
+    if (month && Number(day) >= 1 && Number(day) <= 31) return `${year}-${month}-${day}`;
+  }
+
+  // Pattern 5: 8-digit contiguous DDMMYYYY (e.g. 26082026)
+  const ddmmyyyyMatch = text.match(/\b(\d{2})(\d{2})(202[4-9]|203[0-5])\b/);
+  if (ddmmyyyyMatch) {
+    const day = ddmmyyyyMatch[1];
+    const month = ddmmyyyyMatch[2];
+    const year = ddmmyyyyMatch[3];
+    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31) {
+      return `${year}-${month}-${day}`;
+    }
   }
 
   return null;

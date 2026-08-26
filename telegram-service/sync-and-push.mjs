@@ -57,7 +57,29 @@ async function main() {
       cwd: ROOT_DIR,
       stdio: 'inherit',
     });
-    execSync('git push origin main', { cwd: ROOT_DIR, stdio: 'inherit' });
+
+    // Pull latest before pushing to avoid rejected non-fast-forward updates
+    try {
+      execSync('git pull --rebase origin main', { cwd: ROOT_DIR, stdio: 'inherit' });
+    } catch (_) {}
+
+    // Push with retry mechanism
+    let pushed = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`📤 Pushing updates to GitHub (Attempt ${attempt}/3)...`);
+        execSync('git push origin main', { cwd: ROOT_DIR, stdio: 'inherit' });
+        pushed = true;
+        break;
+      } catch (pushErr) {
+        console.warn(`⚠️ Push attempt ${attempt} failed: ${pushErr.message}. Retrying in 4s...`);
+        execSync('timeout /t 4 /nobreak >nul 2>&1 || sleep 4', { cwd: ROOT_DIR, stdio: 'ignore' });
+      }
+    }
+
+    if (!pushed) {
+      throw new Error('Failed to push to GitHub after 3 attempts.');
+    }
 
     console.log(`\n🎉 SUCCESS! Today's newspapers (${todayStr}) pushed to GitHub.`);
     console.log('⚡ Vercel will deploy the updated library in ~30 seconds.');
