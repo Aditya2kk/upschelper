@@ -1,15 +1,12 @@
 /**
- * Telegram Newspaper PDF Fetcher — v2
+ * Multi-Channel Telegram Newspaper PDF Fetcher & Smart Deduplicator
  * 
- * Connects to a public Telegram channel via MTProto, finds PDF documents,
- * downloads them, and generates a manifest.json for the frontend.
- * 
- * Key improvements over v1:
- * - Scans 200+ messages (not just 50) to reliably find today's papers
- * - Robust date extraction from filenames with ~, -, _, space separators
- * - Detailed [PDF FOUND] logging for every candidate
- * - Timeout-resilient: individual download failures don't kill the whole run
- * - Summary report at the end
+ * Features:
+ * - Scans MULTIPLE Telegram channels configured in channels.json
+ * - Smart Deduplication: If the same newspaper edition (e.g. Indian Express Delhi 26-08-2026)
+ *   is uploaded to multiple channels, it picks ONLY ONE copy and skips duplicates.
+ * - Extracts date, newspaper name, edition, language automatically.
+ * - Outputs clean manifest.json for frontend library.
  * 
  * Usage: npm run fetch
  */
@@ -28,15 +25,35 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const API_ID = parseInt(process.env.TELEGRAM_API_ID);
 const API_HASH = process.env.TELEGRAM_API_HASH;
 const SESSION = process.env.TELEGRAM_SESSION;
-const CHANNEL = process.env.TELEGRAM_CHANNEL || 'abvcdsdf';
-const MESSAGE_LIMIT = parseInt(process.env.FETCH_MESSAGE_LIMIT || '300');
+const MESSAGE_LIMIT = parseInt(process.env.FETCH_MESSAGE_LIMIT || '200');
 const OUTPUT_DIR = path.resolve(__dirname, process.env.PDF_OUTPUT_DIR || '../frontend/public/newspapers');
 const MANIFEST_PATH = path.join(OUTPUT_DIR, 'manifest.json');
+const CHANNELS_PATH = path.join(__dirname, 'channels.json');
+
+// ─── Channel Loading ──────────────────────────────────────
+export function getActiveChannels() {
+  if (fs.existsSync(CHANNELS_PATH)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(CHANNELS_PATH, 'utf8'));
+      if (Array.isArray(data) && data.length > 0) {
+        return data.filter(c => c.active !== false);
+      }
+    } catch (_) {}
+  }
+  return [
+    {
+      id: 'default',
+      name: 'Official National e-Paper Channel',
+      username: process.env.TELEGRAM_CHANNEL || 'abvcdsdf',
+      url: `https://t.me/${process.env.TELEGRAM_CHANNEL || 'abvcdsdf'}`,
+      active: true,
+    }
+  ];
+}
 
 // ─── Today's date (IST) ──────────────────────────────────
 function getTodayIST() {
   const now = new Date();
-  // Convert to IST (UTC+5:30)
   const ist = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
   return ist.toISOString().split('T')[0]; // YYYY-MM-DD
 }
@@ -54,6 +71,9 @@ const NEWSPAPER_PATTERNS = [
   { regex: /business\s*standard/i, name: 'Business Standard', language: 'English' },
   { regex: /telegraph/i, name: 'The Telegraph', language: 'English' },
   { regex: /deccan\s*(herald|chronicle)/i, name: 'Deccan Herald', language: 'English' },
+  { regex: /financial\s*express/i, name: 'Financial Express', language: 'English' },
+  { regex: /the\s*pioneer/i, name: 'The Pioneer', language: 'English' },
+  { regex: /the\s*statesman/i, name: 'The Statesman', language: 'English' },
   { regex: /dainik\s*jagran/i, name: 'Dainik Jagran', language: 'Hindi' },
   { regex: /dainik\s*bhaskar/i, name: 'Dainik Bhaskar', language: 'Hindi' },
   { regex: /amar\s*ujala/i, name: 'Amar Ujala', language: 'Hindi' },
@@ -69,148 +89,163 @@ const NEWSPAPER_PATTERNS = [
 
 // ─── Edition detection ────────────────────────────────────
 const EDITION_PATTERNS = [
-  { regex: /delhi/i, edition: 'Delhi' },
-  { regex: /mumbai|bombay/i, edition: 'Mumbai' },
-  { regex: /kolkata|calcutta/i, edition: 'Kolkata' },
-  { regex: /chennai|madras/i, edition: 'Chennai' },
-  { regex: /bangalore|bengaluru/i, edition: 'Bengaluru' },
-  { regex: /hyderabad/i, edition: 'Hyderabad' },
-  { regex: /lucknow/i, edition: 'Lucknow' },
-  { regex: /all\s*india|national/i, edition: 'National' },
-  { regex: /hd\b/i, edition: 'HD' },
+  { regex: /\b(delhi|dl)\b/i, edition: 'Delhi' },
+  { regex: /\b(mumbai|bom)\b/i, edition: 'Mumbai' },
+  { regex: /\b(bangalore|bengaluru|blr)\b/i, edition: 'Bangalore' },
+  { regex: /\b(chennai|mas)\b/i, edition: 'Chennai' },
+  { regex: /\b(kolkata|cal)\b/i, edition: 'Kolkata' },
+  { regex: /\b(hyderabad|hyd)\b/i, edition: 'Hyderabad' },
+  { regex: /\b(chandigarh|chd)\b/i, edition: 'Chandigarh' },
+  { regex: /\b(pune)\b/i, edition: 'Pune' },
+  { regex: /\b(ahmedabad)\b/i, edition: 'Ahmedabad' },
+  { regex: /\b(jaipur)\b/i, edition: 'Jaipur' },
+  { regex: /\b(lucknow)\b/i, edition: 'Lucknow' },
+  { regex: /\b(patna)\b/i, edition: 'Patna' },
+  { regex: /\b(bhopal)\b/i, edition: 'Bhopal' },
+  { regex: /\b(national)\b/i, edition: 'National' },
+  { regex: /\b(hd)\b/i, edition: 'HD' },
+  { regex: /\b(city)\b/i, edition: 'City' },
 ];
 
-function detectNewspaper(text, filename) {
-  const combined = `${text || ''} ${filename || ''}`;
-  for (const pattern of NEWSPAPER_PATTERNS) {
-    if (pattern.regex.test(combined)) {
-      return { ...pattern };
+function detectNewspaper(caption, filename) {
+  const text = `${caption} ${filename}`;
+  for (const p of NEWSPAPER_PATTERNS) {
+    if (p.regex.test(text)) {
+      return { name: p.name, language: p.language };
     }
   }
   return null;
 }
 
-function detectEdition(text, filename) {
-  const combined = `${text || ''} ${filename || ''}`;
-  for (const pattern of EDITION_PATTERNS) {
-    if (pattern.regex.test(combined)) {
-      return pattern.edition;
+function detectEdition(caption, filename) {
+  const text = `${caption} ${filename}`;
+  for (const p of EDITION_PATTERNS) {
+    if (p.regex.test(text)) {
+      return p.edition;
     }
   }
   return null;
 }
 
-/**
- * Extract a date from a filename or caption text.
- * Supports separators: ~ - _ . / space
- * Supports formats: DD~MM~YYYY, DD-MM-YYYY, YYYY-MM-DD, DD MM YYYY, etc.
- * Returns YYYY-MM-DD string or null.
- */
 function extractDateFromText(text) {
   if (!text) return null;
 
-  // Normalize separators: replace ~ _ . / with -
-  const normalized = text.replace(/[~_./]/g, '-');
-
-  // Try DD-MM-YYYY or DD MM YYYY (most common in Indian newspapers)
-  const ddmmyyyy = normalized.match(/(\d{1,2})\s*-\s*(\d{1,2})\s*-\s*(\d{4})/);
-  if (ddmmyyyy) {
-    const [, dd, mm, yyyy] = ddmmyyyy;
-    const day = parseInt(dd);
-    const month = parseInt(mm);
-    const year = parseInt(yyyy);
-    if (year >= 2020 && year <= 2030 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return `${yyyy}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  // Pattern 1: DD~MM~YYYY, DD-MM-YYYY, DD_MM_YYYY, DD.MM.YYYY
+  const dmyMatch = text.match(/(\d{1,2})[~_\-\.\s](\d{1,2})[~_\-\.\s](\d{4})/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31) {
+      return `${year}-${month}-${day}`;
     }
   }
 
-  // Try YYYY-MM-DD
-  const yyyymmdd = normalized.match(/(\d{4})\s*-\s*(\d{1,2})\s*-\s*(\d{1,2})/);
-  if (yyyymmdd) {
-    const [, yyyy, mm, dd] = yyyymmdd;
-    const year = parseInt(yyyy);
-    const month = parseInt(mm);
-    const day = parseInt(dd);
-    if (year >= 2020 && year <= 2030 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-      return `${yyyy}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  // Pattern 2: YYYY-MM-DD
+  const ymdMatch = text.match(/(\d{4})[~_\-\.\s](\d{1,2})[~_\-\.\s](\d{1,2})/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, '0');
+    const day = ymdMatch[3].padStart(2, '0');
+    if (Number(month) >= 1 && Number(month) <= 12 && Number(day) >= 1 && Number(day) <= 31) {
+      return `${year}-${month}-${day}`;
     }
   }
 
-  // Try DD Month YYYY (e.g., "23 August 2026", "23 Aug 2026")
+  // Pattern 3: Month name with day and year
   const monthNames = {
-    jan: '01', january: '01', feb: '02', february: '02', mar: '03', march: '03',
-    apr: '04', april: '04', may: '05', jun: '06', june: '06',
-    jul: '07', july: '07', aug: '08', august: '08', sep: '09', september: '09',
-    oct: '10', october: '10', nov: '11', november: '11', dec: '12', december: '12',
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+    january: '01', february: '02', march: '03', april: '04', june: '06',
+    july: '07', august: '08', september: '09', october: '10', november: '11', december: '12',
   };
-  const namedMonth = text.match(/(\d{1,2})\s*[-~_./]?\s*(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*[-~_./]?\s*(\d{4})/i);
-  if (namedMonth) {
-    const [, dd, monthStr, yyyy] = namedMonth;
-    const mm = monthNames[monthStr.toLowerCase()];
-    if (mm) {
-      return `${yyyy}-${mm}-${String(parseInt(dd)).padStart(2, '0')}`;
-    }
+  const namedMatch = text.match(/(\d{1,2})[~_\-\.\s]*(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[~_\-\.\s]*(\d{4})/i);
+  if (namedMatch) {
+    const day = namedMatch[1].padStart(2, '0');
+    const month = monthNames[namedMatch[2].toLowerCase()];
+    const year = namedMatch[3];
+    if (month) return `${year}-${month}-${day}`;
   }
 
   return null;
 }
 
 function sanitizeFilename(name) {
-  return name
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '-')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .substring(0, 150);
+  return name.replace(/[^\w\.\-\s]/g, '').replace(/\s+/g, '-').trim();
 }
 
-function formatDisplayDate(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  });
+function formatDisplayDate(isoDate) {
+  try {
+    const [year, month, day] = isoDate.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return isoDate;
+  }
 }
 
-// ─── Main fetch function ──────────────────────────────────
+// ─── Deduplication Key Generator ──────────────────────────
+function getDeduplicationKey(newspaperName, edition, editionDate) {
+  const normName = newspaperName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const normEdition = (edition || 'main').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `${normName}_${normEdition}_${editionDate}`;
+}
+
+// ─── Main Fetch Function ──────────────────────────────────
 export async function fetchNewspapers() {
   if (!API_ID || !API_HASH || !SESSION) {
-    console.error('❌ Missing Telegram credentials. Run "npm run auth" first.');
-    console.error('   Required: TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_SESSION');
-    return { success: false, error: 'Missing credentials' };
+    console.error('❌ Missing TELEGRAM_API_ID, TELEGRAM_API_HASH, or TELEGRAM_SESSION in .env');
+    return { success: false, error: 'Missing Telegram API credentials' };
   }
 
-  // Ensure output directory exists
   if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
   // Load existing manifest
-  let manifest = { lastFetch: null, channel: CHANNEL, totalPapers: 0, newspapers: [] };
+  let manifest = { lastFetch: null, totalPapers: 0, newspapers: [] };
   if (fs.existsSync(MANIFEST_PATH)) {
     try {
       manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf-8'));
     } catch (e) {
-      console.log('⚠️  Could not parse existing manifest, starting fresh.');
+      console.log('⚠️ Could not parse existing manifest, initializing fresh.');
     }
   }
 
-  // Build set of existing files on disk (not just manifest IDs)
+  // Populate deduplication tracking set from existing manifest
+  const seenEditions = new Set();
+  const existingMsgIds = new Set();
+
+  for (const n of manifest.newspapers) {
+    existingMsgIds.add(n.telegramMsgId);
+    const key = getDeduplicationKey(n.title.split('—')[0].trim(), n.title.includes('—') ? n.title.split('—')[1].replace('Edition', '').trim() : '', n.editionDate);
+    seenEditions.add(key);
+  }
+
+  // Existing files on disk
   const existingFiles = new Set(
     fs.readdirSync(OUTPUT_DIR).filter(f => f.endsWith('.pdf')).map(f => f.toLowerCase())
   );
-  const existingMsgIds = new Set(manifest.newspapers.map((n) => n.telegramMsgId));
 
-  console.log(`\n${'═'.repeat(60)}`);
-  console.log(`📰 UPSC NewsHub — Telegram Newspaper Fetcher v2`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`📅 Today (IST):    ${TODAY}`);
-  console.log(`📡 Channel:        @${CHANNEL}`);
-  console.log(`📨 Scan limit:     ${MESSAGE_LIMIT} messages`);
-  console.log(`💾 Output:         ${OUTPUT_DIR}`);
-  console.log(`📂 Existing PDFs:  ${existingFiles.size}`);
-  console.log(`${'─'.repeat(60)}\n`);
+  const channels = getActiveChannels();
 
-  console.log(`📡 Connecting to Telegram...`);
+  console.log(`\n${'═'.repeat(65)}`);
+  console.log(`📰 UPSC NewsHub — Multi-Channel Telegram Ingestion & Deduplicator`);
+  console.log(`${'═'.repeat(65)}`);
+  console.log(`📅 Target Date (IST):   ${TODAY}`);
+  console.log(`📡 Configured Channels:  ${channels.length} channel(s)`);
+  channels.forEach((c, idx) => console.log(`   ${idx + 1}. @${c.username || c.channelId || c.url} (${c.name || 'News Channel'})`));
+  console.log(`💾 Storage Output:       ${OUTPUT_DIR}`);
+  console.log(`📂 Existing PDFs:        ${existingFiles.size}`);
+  console.log(`🛡️  Deduplication:       ACTIVE (Single copy policy across all channels)`);
+  console.log(`${'─'.repeat(65)}\n`);
+
+  console.log(`📡 Connecting to Telegram Client...`);
   const client = new TelegramClient(
     new StringSession(SESSION),
     API_ID,
@@ -219,233 +254,211 @@ export async function fetchNewspapers() {
   );
 
   await client.connect();
-  console.log(`✅ Connected to Telegram\n`);
+  console.log(`✅ Connected to Telegram successfully.\n`);
 
-  // Stats
   let totalPdfsFound = 0;
   let newDownloaded = 0;
   let alreadyExisting = 0;
+  let duplicatesSkipped = 0;
   let downloadFailed = 0;
   let todayPdfsFound = 0;
   let todayPdfsDownloaded = 0;
-  let todayPdfsMissing = 0;
   const downloadedEntries = [];
 
-  try {
-    // Fetch messages in batches to handle large limits
-    console.log(`📂 Fetching messages from @${CHANNEL}...`);
-    let allMessages = [];
-    let offsetId = 0;
-    const batchSize = 100;
-    let fetchedTotal = 0;
+  // Iterate over each configured channel
+  for (const ch of channels) {
+    const channelTarget = ch.username || ch.channelId || ch.url.replace('https://t.me/', '').replace('@', '').trim();
+    console.log(`\n${'─'.repeat(50)}`);
+    console.log(`🔍 Scanning Channel: @${channelTarget} (${ch.name || 'Feed'})`);
+    console.log(`${'─'.repeat(50)}`);
 
-    while (fetchedTotal < MESSAGE_LIMIT) {
-      const remaining = MESSAGE_LIMIT - fetchedTotal;
-      const limit = Math.min(batchSize, remaining);
+    try {
+      let allMessages = [];
+      let offsetId = 0;
+      const batchSize = 100;
+      let fetchedTotal = 0;
 
-      const batch = await client.getMessages(CHANNEL, {
-        limit,
-        offsetId: offsetId || undefined,
-      });
+      while (fetchedTotal < MESSAGE_LIMIT) {
+        const remaining = MESSAGE_LIMIT - fetchedTotal;
+        const limit = Math.min(batchSize, remaining);
 
-      if (!batch || batch.length === 0) break;
-
-      allMessages = allMessages.concat(batch);
-      fetchedTotal += batch.length;
-      offsetId = batch[batch.length - 1].id;
-
-      // Log progress
-      process.stdout.write(`   Fetched ${fetchedTotal} messages...\r`);
-
-      // If we got fewer than requested, we've reached the end
-      if (batch.length < limit) break;
-    }
-
-    console.log(`\n📨 Total messages fetched: ${allMessages.length}`);
-    console.log(`\n${'─'.repeat(60)}`);
-    console.log(`🔍 Scanning for PDF documents...\n`);
-
-    for (const msg of allMessages) {
-      // Check if message has a document (PDF)
-      if (!msg.media || !(msg.media instanceof Api.MessageMediaDocument)) continue;
-
-      const doc = msg.media.document;
-      if (!(doc instanceof Api.Document)) continue;
-
-      // Check file attributes for filename
-      const fileAttr = doc.attributes.find(
-        (a) => a instanceof Api.DocumentAttributeFilename
-      );
-
-      const originalFilename = fileAttr?.fileName || '';
-      const mimeType = doc.mimeType || '';
-
-      // Only process PDFs
-      const isPdf = mimeType === 'application/pdf' || originalFilename.toLowerCase().endsWith('.pdf');
-      if (!isPdf) continue;
-
-      // ─── PDF Found! ─────────────────────────────────
-      totalPdfsFound++;
-
-      const caption = msg.message || '';
-      const msgDate = new Date(msg.date * 1000);
-      const msgDateStr = msgDate.toISOString().split('T')[0];
-      const fileSizeMB = (Number(doc.size) / 1024 / 1024).toFixed(1);
-
-      // Detect newspaper name
-      const detected = detectNewspaper(caption, originalFilename);
-      const newspaperName = detected?.name || originalFilename.replace(/\.pdf$/i, '').replace(/[~_-]+/g, ' ').trim() || 'Document';
-      const language = detected?.language || 'English';
-
-      // Detect edition
-      const edition = detectEdition(caption, originalFilename);
-
-      // Extract date from filename (primary) or fallback to message date
-      const filenameDate = extractDateFromText(originalFilename);
-      const captionDate = extractDateFromText(caption);
-      const editionDate = filenameDate || captionDate || msgDateStr;
-
-      const isToday = editionDate === TODAY;
-      if (isToday) todayPdfsFound++;
-
-      // Build a clean saved filename
-      const editionSuffix = edition ? `-${edition}` : '';
-      const savedFilename = sanitizeFilename(
-        `${newspaperName}${editionSuffix}-${editionDate}.pdf`
-      );
-
-      // ─── Log every candidate ────────────────────────
-      console.log(`  [PDF FOUND] #${totalPdfsFound}`);
-      console.log(`    Filename:           ${originalFilename}`);
-      console.log(`    Size:               ${fileSizeMB} MB`);
-      console.log(`    Message date:       ${msgDateStr}`);
-      console.log(`    Detected newspaper: ${newspaperName}`);
-      console.log(`    Detected edition:   ${edition || '(none)'}`);
-      console.log(`    Extracted date:     ${editionDate}${isToday ? '  ← TODAY' : ''}`);
-      console.log(`    Save as:            ${savedFilename}`);
-
-      // Check if already exists
-      const savePath = path.join(OUTPUT_DIR, savedFilename);
-      if (existingFiles.has(savedFilename.toLowerCase()) || fs.existsSync(savePath)) {
-        alreadyExisting++;
-        console.log(`    Status:             ⏭️  Already exists\n`);
-        
-        // Ensure it's in the manifest even if file existed before
-        if (!existingMsgIds.has(msg.id)) {
-          const entry = buildEntry(msg, newspaperName, originalFilename, caption, editionDate, language, edition, savedFilename, fileSizeMB, doc.size);
-          manifest.newspapers.push(entry);
-          existingMsgIds.add(msg.id);
+        let batch = [];
+        try {
+          batch = await client.getMessages(channelTarget, {
+            limit,
+            offsetId: offsetId || undefined,
+          });
+        } catch (fetchErr) {
+          console.log(`⚠️  Could not fetch messages from @${channelTarget}: ${fetchErr.message}`);
+          break;
         }
-        continue;
+
+        if (!batch || batch.length === 0) break;
+
+        allMessages = allMessages.concat(batch);
+        fetchedTotal += batch.length;
+        offsetId = batch[batch.length - 1].id;
+
+        process.stdout.write(`   Fetched ${fetchedTotal} messages from @${channelTarget}...\r`);
+        if (batch.length < limit) break;
       }
 
-      // Skip if already in manifest by message ID
-      if (existingMsgIds.has(msg.id)) {
-        alreadyExisting++;
-        console.log(`    Status:             ⏭️  Already in manifest\n`);
-        continue;
-      }
+      console.log(`\n📨 Messages fetched: ${allMessages.length}`);
 
-      // ─── Download ───────────────────────────────────
-      console.log(`    Status:             📥 Downloading...`);
+      for (const msg of allMessages) {
+        if (!msg.media || !(msg.media instanceof Api.MessageMediaDocument)) continue;
+        const doc = msg.media.document;
+        if (!(doc instanceof Api.Document)) continue;
 
-      try {
-        const buffer = await client.downloadMedia(msg.media, {
-          workers: 1,
-        });
+        const fileAttr = doc.attributes.find(a => a instanceof Api.DocumentAttributeFilename);
+        const originalFilename = fileAttr?.fileName || '';
+        const mimeType = doc.mimeType || '';
 
-        if (buffer) {
-          fs.writeFileSync(savePath, buffer);
-          const actualSize = (fs.statSync(savePath).size / 1024 / 1024).toFixed(1);
-          console.log(`    Result:             ✅ Saved (${actualSize} MB)\n`);
+        const isPdf = mimeType === 'application/pdf' || originalFilename.toLowerCase().endsWith('.pdf');
+        if (!isPdf) continue;
 
-          const entry = buildEntry(msg, newspaperName, originalFilename, caption, editionDate, language, edition, savedFilename, actualSize, fs.statSync(savePath).size);
-          manifest.newspapers.push(entry);
-          existingMsgIds.add(msg.id);
-          existingFiles.add(savedFilename.toLowerCase());
-          downloadedEntries.push(entry);
-          newDownloaded++;
-          if (isToday) todayPdfsDownloaded++;
-        } else {
-          console.log(`    Result:             ⚠️  Empty buffer returned\n`);
+        totalPdfsFound++;
+
+        const caption = msg.message || '';
+        const msgDate = new Date(msg.date * 1000);
+        const msgDateStr = msgDate.toISOString().split('T')[0];
+        const fileSizeMB = (Number(doc.size) / 1024 / 1024).toFixed(1);
+
+        const detected = detectNewspaper(caption, originalFilename);
+        const newspaperName = detected?.name || originalFilename.replace(/\.pdf$/i, '').replace(/[~_-]+/g, ' ').trim() || 'National Newspaper';
+        const language = detected?.language || 'English';
+        const edition = detectEdition(caption, originalFilename);
+
+        const filenameDate = extractDateFromText(originalFilename);
+        const captionDate = extractDateFromText(caption);
+        const editionDate = filenameDate || captionDate || msgDateStr;
+
+        const isToday = editionDate === TODAY;
+        if (isToday) todayPdfsFound++;
+
+        const editionSuffix = edition ? `-${edition}` : '';
+        const savedFilename = sanitizeFilename(
+          `${newspaperName}${editionSuffix}-${editionDate}.pdf`
+        );
+        const savePath = path.join(OUTPUT_DIR, savedFilename);
+
+        const dedupKey = getDeduplicationKey(newspaperName, edition, editionDate);
+
+        console.log(`  [PDF FOUND] #${totalPdfsFound}`);
+        console.log(`    Channel:            @${channelTarget}`);
+        console.log(`    Filename:           ${originalFilename}`);
+        console.log(`    Size:               ${fileSizeMB} MB`);
+        console.log(`    Detected newspaper: ${newspaperName}`);
+        console.log(`    Detected edition:   ${edition || '(none)'}`);
+        console.log(`    Extracted date:     ${editionDate}${isToday ? '  ← TODAY' : ''}`);
+        console.log(`    Save as:            ${savedFilename}`);
+
+        // ─── Smart Cross-Channel Deduplication ───────────────
+        if (seenEditions.has(dedupKey)) {
+          duplicatesSkipped++;
+          console.log(`    Status:             ⏭️  DUPLICATE DETECTED: [${newspaperName} - ${edition || 'Main'} (${editionDate})] already collected from another channel. Picking one only!\n`);
+          continue;
+        }
+
+        // Check if file already exists on disk
+        if (existingFiles.has(savedFilename.toLowerCase()) || fs.existsSync(savePath)) {
+          alreadyExisting++;
+          seenEditions.add(dedupKey);
+          console.log(`    Status:             ⏭️  Already exists on disk\n`);
+
+          if (!existingMsgIds.has(msg.id)) {
+            const entry = buildEntry(msg, newspaperName, originalFilename, caption, editionDate, language, edition, savedFilename, fileSizeMB, doc.size);
+            manifest.newspapers.push(entry);
+            existingMsgIds.add(msg.id);
+          }
+          continue;
+        }
+
+        // ─── Download ───────────────────────────────────────
+        console.log(`    Status:             📥 Downloading (Single Selected Copy)...`);
+
+        try {
+          const buffer = await client.downloadMedia(msg.media, { workers: 1 });
+
+          if (buffer) {
+            fs.writeFileSync(savePath, buffer);
+            const actualSize = (fs.statSync(savePath).size / 1024 / 1024).toFixed(1);
+            console.log(`    Result:             ✅ Saved (${actualSize} MB)\n`);
+
+            const entry = buildEntry(msg, newspaperName, originalFilename, caption, editionDate, language, edition, savedFilename, actualSize, fs.statSync(savePath).size);
+            manifest.newspapers.push(entry);
+            existingMsgIds.add(msg.id);
+            existingFiles.add(savedFilename.toLowerCase());
+            seenEditions.add(dedupKey);
+            downloadedEntries.push(entry);
+            newDownloaded++;
+            if (isToday) todayPdfsDownloaded++;
+          } else {
+            console.log(`    Result:             ⚠️  Empty buffer returned\n`);
+            downloadFailed++;
+          }
+        } catch (dlErr) {
           downloadFailed++;
-        }
-      } catch (dlErr) {
-        downloadFailed++;
-        // Don't let a single download failure kill the whole run
-        const errMsg = dlErr.message || String(dlErr);
-        if (errMsg.includes('TIMEOUT') || errMsg.includes('timeout')) {
-          console.log(`    Result:             ⚠️  Timeout (will retry next run)\n`);
-        } else {
-          console.log(`    Result:             ❌ Failed: ${errMsg}\n`);
+          console.log(`    Result:             ❌ Failed: ${dlErr.message}\n`);
         }
       }
-    }
-
-    // Check how many of today's papers are missing
-    const todayInManifest = manifest.newspapers.filter(n => n.editionDate === TODAY).length;
-    todayPdfsMissing = Math.max(0, todayPdfsFound - todayInManifest);
-
-  } catch (err) {
-    const errMsg = err.message || String(err);
-    // If it's a timeout but we already downloaded some files, don't report failure
-    if ((errMsg.includes('TIMEOUT') || errMsg.includes('timeout')) && newDownloaded > 0) {
-      console.log(`\n⚠️  Connection timed out, but ${newDownloaded} PDFs were already downloaded successfully.`);
-    } else {
-      console.error(`\n❌ Error fetching messages: ${errMsg}`);
-      // Still save whatever we have
+    } catch (chErr) {
+      console.error(`❌ Error processing channel @${channelTarget}: ${chErr.message}`);
     }
   }
 
   // ─── Sort manifest: newest edition date first ───────────
   manifest.newspapers.sort((a, b) => {
-    // Primary sort: edition date descending
     if (a.editionDate !== b.editionDate) return b.editionDate.localeCompare(a.editionDate);
-    // Secondary: newspaper name ascending
     return a.title.localeCompare(b.title);
   });
 
-  // Deduplicate by telegramMsgId
-  const seen = new Set();
+  // Final deduplication pass
+  const finalSeen = new Set();
   manifest.newspapers = manifest.newspapers.filter(n => {
-    if (seen.has(n.telegramMsgId)) return false;
-    seen.add(n.telegramMsgId);
+    const key = getDeduplicationKey(n.title.split('—')[0].trim(), n.title.includes('—') ? n.title.split('—')[1].replace('Edition', '').trim() : '', n.editionDate);
+    if (finalSeen.has(key)) return false;
+    finalSeen.add(key);
     return true;
   });
 
   // Update manifest
   manifest.lastFetch = new Date().toISOString();
-  manifest.channel = CHANNEL;
   manifest.totalPapers = manifest.newspapers.length;
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
 
-  // ─── Summary ────────────────────────────────────────────
-  console.log(`\n${'═'.repeat(60)}`);
-  console.log(`📊 FETCH SUMMARY`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  PDFs found in channel:      ${totalPdfsFound}`);
-  console.log(`  New PDFs downloaded:         ${newDownloaded}`);
-  console.log(`  Already existing:            ${alreadyExisting}`);
-  console.log(`  Download failures:           ${downloadFailed}`);
-  console.log(`  ─────────────────────────────────`);
-  console.log(`  Today's newspapers found:    ${todayPdfsFound}`);
-  console.log(`  Today's newspapers saved:    ${todayPdfsDownloaded}`);
-  console.log(`  Today's newspapers missing:  ${todayPdfsMissing}`);
-  console.log(`  ─────────────────────────────────`);
-  console.log(`  Total in library:            ${manifest.totalPapers}`);
-  console.log(`  Manifest saved:              ${MANIFEST_PATH}`);
-  console.log(`${'═'.repeat(60)}\n`);
+  // Sync to frontend channels
+  try {
+    fs.copyFileSync(CHANNELS_PATH, path.join(OUTPUT_DIR, 'channels.json'));
+  } catch (_) {}
 
-  // Disconnect gracefully
+  // ─── Summary ────────────────────────────────────────────
+  console.log(`\n${'═'.repeat(65)}`);
+  console.log(`📊 MULTI-CHANNEL INGESTION SUMMARY`);
+  console.log(`${'═'.repeat(65)}`);
+  console.log(`  Channels processed:         ${channels.length}`);
+  console.log(`  PDFs scanned in channels:   ${totalPdfsFound}`);
+  console.log(`  New PDFs downloaded:        ${newDownloaded}`);
+  console.log(`  Duplicates eliminated:      ${duplicatesSkipped} (Single copy kept)`);
+  console.log(`  Already existing:           ${alreadyExisting}`);
+  console.log(`  Download failures:          ${downloadFailed}`);
+  console.log(`  ─────────────────────────────────`);
+  console.log(`  Today's newspapers found:   ${todayPdfsFound}`);
+  console.log(`  Today's newspapers saved:   ${todayPdfsDownloaded}`);
+  console.log(`  ─────────────────────────────────`);
+  console.log(`  Total in library:           ${manifest.totalPapers}`);
+  console.log(`  Manifest saved:             ${MANIFEST_PATH}`);
+  console.log(`${'═'.repeat(65)}\n`);
+
   try {
     await client.disconnect();
-  } catch (e) {
-    // Ignore disconnect errors
-  }
+  } catch (e) {}
 
   return {
     success: true,
+    channels: channels.length,
     newCount: newDownloaded,
+    duplicatesSkipped,
     total: manifest.totalPapers,
     todayFound: todayPdfsFound,
     todayDownloaded: todayPdfsDownloaded,
@@ -476,15 +489,14 @@ function buildEntry(msg, newspaperName, originalFilename, caption, editionDate, 
 }
 
 // ─── Run directly ─────────────────────────────────────────
-fetchNewspapers()
-  .then((result) => {
-    if (result.success) {
-      process.exit(0);
-    } else {
+if (process.argv[1] && process.argv[1].endsWith('fetch-newspapers.mjs')) {
+  fetchNewspapers()
+    .then((result) => {
+      if (result.success) process.exit(0);
+      else process.exit(1);
+    })
+    .catch((err) => {
+      console.error('Fatal error:', err);
       process.exit(1);
-    }
-  })
-  .catch((err) => {
-    console.error('Fatal error:', err);
-    process.exit(1);
-  });
+    });
+}

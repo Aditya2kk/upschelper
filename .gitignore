@@ -70,10 +70,6 @@ temp_*/
 backend/uploads/
 telegram-service/downloads/
 
-# Large newspaper PDF binaries
-frontend/public/newspapers/*.pdf
-!frontend/public/newspapers/manifest.json
-
 # Test Coverage
 coverage/
 htmlcov/
