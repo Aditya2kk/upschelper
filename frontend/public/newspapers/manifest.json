@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-08-31T05:12:07.090Z",
+  "lastFetch": "2026-08-31T05:32:12.868Z",
   "newspapers": [
+    {
+      "id": "tg-1409",
+      "telegramMsgId": 1409,
+      "title": "IE Delhi 31 08 — Delhi Edition",
+      "originalFilename": "IE-Delhi 31-08.pdf",
+      "caption": "IE-Delhi 31-08.pdf",
+      "editionDate": "2026-08-31",
+      "displayDate": "Monday, 31 August 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/IE-Delhi-31-08-Delhi-2026-08-31.pdf",
+      "filename": "IE-Delhi-31-08-Delhi-2026-08-31.pdf",
+      "fileSize": 5485515,
+      "fileSizeMB": "5.2",
+      "fetchedAt": "11:02 am",
+      "fetchedTimestamp": "2026-08-31T05:32:12.177Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-9318",
       "telegramMsgId": 9318,
@@ -3250,5 +3267,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 191
+  "totalPapers": 192
 }
