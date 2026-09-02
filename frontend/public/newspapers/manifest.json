@@ -1,5 +1,5 @@
 {
-  "lastFetch": "2026-09-02T03:52:09.745Z",
+  "lastFetch": "2026-09-02T15:10:09.296Z",
   "newspapers": [
     {
       "id": "tg-1413",
@@ -16,6 +16,23 @@
       "fileSizeMB": "10.4",
       "fetchedAt": "09:02 am",
       "fetchedTimestamp": "2026-09-02T03:32:19.778Z",
+      "source": "National Daily Edition"
+    },
+    {
+      "id": "tg-1415",
+      "telegramMsgId": 1415,
+      "title": "Indian Express — HD Edition",
+      "originalFilename": "INDIAN EXPRESS UPSC IAS EDITION HD 02~09~2026.pdf",
+      "caption": "INDIAN EXPRESS UPSC IAS EDITION HD 02~09~2026.",
+      "editionDate": "2026-09-02",
+      "displayDate": "Wednesday, 2 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/Indian-Express-HD-2026-09-02.pdf",
+      "filename": "Indian-Express-HD-2026-09-02.pdf",
+      "fileSize": 3818317,
+      "fileSizeMB": "3.6",
+      "fetchedAt": "08:40 pm",
+      "fetchedTimestamp": "2026-09-02T15:10:08.905Z",
       "source": "National Daily Edition"
     },
     {
@@ -3369,5 +3386,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 198
+  "totalPapers": 199
 }
