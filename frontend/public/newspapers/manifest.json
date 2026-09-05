@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-09-05T00:52:08.598Z",
+  "lastFetch": "2026-09-05T01:12:17.103Z",
   "newspapers": [
+    {
+      "id": "tg-1422",
+      "telegramMsgId": 1422,
+      "title": "IE Delhi 05 09 2026 — Delhi Edition",
+      "originalFilename": "IE Delhi 05-09-2026.pdf",
+      "caption": "IE Delhi 05-09-2026.pdf",
+      "editionDate": "2026-09-05",
+      "displayDate": "Saturday, 5 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/IE-Delhi-05-09-2026-Delhi-2026-09-05.pdf",
+      "filename": "IE-Delhi-05-09-2026-Delhi-2026-09-05.pdf",
+      "fileSize": 7340463,
+      "fileSizeMB": "7.0",
+      "fetchedAt": "06:42 am",
+      "fetchedTimestamp": "2026-09-05T01:12:15.934Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-9328",
       "telegramMsgId": 9328,
@@ -3522,5 +3539,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 207
+  "totalPapers": 208
 }
