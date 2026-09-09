@@ -1,5 +1,5 @@
 {
-  "lastFetch": "2026-09-09T14:56:37.304Z",
+  "lastFetch": "2026-09-09T15:12:48.386Z",
   "newspapers": [
     {
       "id": "tg-1430",
@@ -16,6 +16,23 @@
       "fileSizeMB": "7.0",
       "fetchedAt": "08:26 pm",
       "fetchedTimestamp": "2026-09-09T14:56:36.970Z",
+      "source": "National Daily Edition"
+    },
+    {
+      "id": "tg-9338",
+      "telegramMsgId": 9338,
+      "title": "The Hindu — Delhi Edition",
+      "originalFilename": "th.th_delhi.09_09_2026.pdf",
+      "caption": "Good Morning",
+      "editionDate": "2026-09-09",
+      "displayDate": "Wednesday, 9 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-Delhi-2026-09-09.pdf",
+      "filename": "The-Hindu-Delhi-2026-09-09.pdf",
+      "fileSize": 23312088,
+      "fileSizeMB": "22.2",
+      "fetchedAt": "08:42 pm",
+      "fetchedTimestamp": "2026-09-09T15:12:44.560Z",
       "source": "National Daily Edition"
     },
     {
@@ -3726,5 +3743,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 219
+  "totalPapers": 220
 }
