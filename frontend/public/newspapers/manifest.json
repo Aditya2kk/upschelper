@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-09-24T23:32:06.606Z",
+  "lastFetch": "2026-09-24T23:52:13.251Z",
   "newspapers": [
+    {
+      "id": "tg-9371",
+      "telegramMsgId": 9371,
+      "title": "The Hindu — International Edition",
+      "originalFilename": "th.th_international.25_09_2026.pdf",
+      "caption": "",
+      "editionDate": "2026-09-25",
+      "displayDate": "Friday, 25 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-International-2026-09-25.pdf",
+      "filename": "The-Hindu-International-2026-09-25.pdf",
+      "fileSize": 4513207,
+      "fileSizeMB": "4.3",
+      "fetchedAt": "05:22 am",
+      "fetchedTimestamp": "2026-09-24T23:52:10.241Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-1467",
       "telegramMsgId": 1467,
@@ -4440,5 +4457,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 261
+  "totalPapers": 262
 }
