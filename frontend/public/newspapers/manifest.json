@@ -1,6 +1,40 @@
 {
-  "lastFetch": "2026-09-25T23:52:07.627Z",
+  "lastFetch": "2026-09-26T00:12:42.883Z",
   "newspapers": [
+    {
+      "id": "tg-9374",
+      "telegramMsgId": 9374,
+      "title": "The Hindu — Delhi Edition",
+      "originalFilename": "th.th_delhi.26_09_2026.pdf",
+      "caption": "Good Morning",
+      "editionDate": "2026-09-26",
+      "displayDate": "Saturday, 26 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-Delhi-2026-09-26.pdf",
+      "filename": "The-Hindu-Delhi-2026-09-26.pdf",
+      "fileSize": 19116520,
+      "fileSizeMB": "18.2",
+      "fetchedAt": "05:42 am",
+      "fetchedTimestamp": "2026-09-26T00:12:29.144Z",
+      "source": "National Daily Edition"
+    },
+    {
+      "id": "tg-9373",
+      "telegramMsgId": 9373,
+      "title": "The Hindu — International Edition",
+      "originalFilename": "th.th_international.26_09_2026.pdf",
+      "caption": "",
+      "editionDate": "2026-09-26",
+      "displayDate": "Saturday, 26 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-International-2026-09-26.pdf",
+      "filename": "The-Hindu-International-2026-09-26.pdf",
+      "fileSize": 6314431,
+      "fileSizeMB": "6.0",
+      "fetchedAt": "05:42 am",
+      "fetchedTimestamp": "2026-09-26T00:12:39.097Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-1469",
       "telegramMsgId": 1469,
@@ -4491,5 +4525,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 264
+  "totalPapers": 266
 }
