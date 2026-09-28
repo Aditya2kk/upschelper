@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-09-28T01:52:06.769Z",
+  "lastFetch": "2026-09-28T12:14:15.455Z",
   "newspapers": [
+    {
+      "id": "tg-1475",
+      "telegramMsgId": 1475,
+      "title": "Indian Express — Delhi Edition",
+      "originalFilename": "INDIAN EXPRESS HD Delhi 28~09~2026.pdf",
+      "caption": "INDIAN EXPRESS HD Delhi 28~09~2026",
+      "editionDate": "2026-09-28",
+      "displayDate": "Monday, 28 September 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/Indian-Express-Delhi-2026-09-28.pdf",
+      "filename": "Indian-Express-Delhi-2026-09-28.pdf",
+      "fileSize": 5090034,
+      "fileSizeMB": "4.9",
+      "fetchedAt": "05:44 pm",
+      "fetchedTimestamp": "2026-09-28T12:14:14.693Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-9379",
       "telegramMsgId": 9379,
@@ -4627,5 +4644,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 272
+  "totalPapers": 273
 }
