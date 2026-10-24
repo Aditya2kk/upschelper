@@ -1,6 +1,57 @@
 {
-  "lastFetch": "2026-10-23T20:52:06.919Z",
+  "lastFetch": "2026-10-24T04:46:25.293Z",
   "newspapers": [
+    {
+      "id": "tg-1532",
+      "telegramMsgId": 1532,
+      "title": "Indian Express — Delhi Edition",
+      "originalFilename": "INDIAN EXPRESS HD Delhi 24~10~2026.pdf",
+      "caption": "INDIAN EXPRESS HD Delhi 24~10~2026.pdf",
+      "editionDate": "2026-10-24",
+      "displayDate": "Saturday, 24 October 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/Indian-Express-Delhi-2026-10-24.pdf",
+      "filename": "Indian-Express-Delhi-2026-10-24.pdf",
+      "fileSize": 10017340,
+      "fileSizeMB": "9.6",
+      "fetchedAt": "10:16 am",
+      "fetchedTimestamp": "2026-10-24T04:46:24.191Z",
+      "source": "National Daily Edition"
+    },
+    {
+      "id": "tg-9434",
+      "telegramMsgId": 9434,
+      "title": "The Hindu — Delhi Edition",
+      "originalFilename": "th.th_delhi.24_10_2026.pdf",
+      "caption": "Good Morning",
+      "editionDate": "2026-10-24",
+      "displayDate": "Saturday, 24 October 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-Delhi-2026-10-24.pdf",
+      "filename": "The-Hindu-Delhi-2026-10-24.pdf",
+      "fileSize": 17637116,
+      "fileSizeMB": "16.8",
+      "fetchedAt": "10:15 am",
+      "fetchedTimestamp": "2026-10-24T04:45:59.119Z",
+      "source": "National Daily Edition"
+    },
+    {
+      "id": "tg-9433",
+      "telegramMsgId": 9433,
+      "title": "The Hindu — International Edition",
+      "originalFilename": "th.th_international.24_10_2026.pdf",
+      "caption": "",
+      "editionDate": "2026-10-24",
+      "displayDate": "Saturday, 24 October 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/The-Hindu-International-2026-10-24.pdf",
+      "filename": "The-Hindu-International-2026-10-24.pdf",
+      "fileSize": 5873012,
+      "fileSizeMB": "5.6",
+      "fetchedAt": "10:16 am",
+      "fetchedTimestamp": "2026-10-24T04:46:05.143Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-1530",
       "telegramMsgId": 1530,
@@ -5324,5 +5375,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 313
+  "totalPapers": 316
 }
