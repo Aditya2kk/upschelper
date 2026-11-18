@@ -1,6 +1,23 @@
 {
-  "lastFetch": "2026-11-18T01:12:06.726Z",
+  "lastFetch": "2026-11-18T01:32:12.746Z",
   "newspapers": [
+    {
+      "id": "tg-1579",
+      "telegramMsgId": 1579,
+      "title": "IE DELHI 18 11 2026 — Delhi Edition",
+      "originalFilename": "IE DELHI-18-11-2026.pdf",
+      "caption": "IE DELHI-18-11-2026.pdf",
+      "editionDate": "2026-11-18",
+      "displayDate": "Wednesday, 18 November 2026",
+      "language": "English",
+      "pdfUrl": "/newspapers/IE-DELHI-18-11-2026-Delhi-2026-11-18.pdf",
+      "filename": "IE-DELHI-18-11-2026-Delhi-2026-11-18.pdf",
+      "fileSize": 5075876,
+      "fileSizeMB": "4.8",
+      "fetchedAt": "07:02 am",
+      "fetchedTimestamp": "2026-11-18T01:32:11.738Z",
+      "source": "National Daily Edition"
+    },
     {
       "id": "tg-9492",
       "telegramMsgId": 9492,
@@ -6140,5 +6157,5 @@
     }
   ],
   "channel": "National e-Paper Archives",
-  "totalPapers": 361
+  "totalPapers": 362
 }
